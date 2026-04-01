@@ -1,0 +1,21 @@
+# Flex generated files
+lexer.yy.c
+lex.yy.c
+*.lex.c
+
+# Bison generated files
+*.tab.c
+*.tab.h
+*.output
+stack.hh
+location.hh
+position.hh
+
+# Compiled executables (replace 'my_compiler' with your output name)
+my_compiler
+*.exe
+*.o
+*.out
+
+# Other files
+input.txt
