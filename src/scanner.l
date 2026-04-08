@@ -42,6 +42,8 @@ while       { printf("KW_WHILE\n"); }
 
 "/*"([^*]|\*+[^*/])*\*+\/    { /* Ignorar comentários de bloco */ }
 
+"=="|"\*\*"|"--"    { printf("POUNCTUATORS(%s)\n", yytext);}
+
 [\[\]\(\)\{\}\,\:\;\*\==\=\#\.\~]    { printf("POUNCTUATORS(%s)\n", yytext);}
 
 [\"\w]    { printf("STRING(%s)\n", yytext);}
