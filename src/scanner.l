@@ -1,62 +1,91 @@
 %{
 #include <stdio.h>
+#include <stdlib.h>
+#include "parser.tab.h"  /* contém definições geradas pelo Bison (NUM, PLUS, etc.) */
 %}
 
 /* Definições de padrões de token e ações */
 %%
 
-auto        { printf("KW_AUTO\n"); }
-break       { printf("KW_BREAK\n"); }
-case        { printf("KW_CASE\n"); }
-char        { printf("KW_CHAR\n"); }
-const       { printf("KW_CONST\n"); }
-continue    { printf("KW_CONTINUE\n"); }
-default     { printf("KW_DEFAULT\n"); }
-do          { printf("KW_DO\n"); }
-double      { printf("KW_DOUBLE\n"); }
-else        { printf("KW_ELSE\n"); }
-enum        { printf("KW_ENUM\n"); }
-extern      { printf("KW_EXTERN\n"); }
-float       { printf("KW_FLOAT\n"); }
-for         { printf("KW_FOR\n"); }
-goto        { printf("KW_GOTO\n"); }
-if          { printf("KW_IF\n"); }
-int         { printf("KW_INT\n"); }
-long        { printf("KW_LONG\n"); }
-register    { printf("KW_INT\n"); }
-return      { printf("KW_RETURN\n"); }
-short       { printf("KW_SHORT\n"); }
-signed      { printf("KW_SIGNED\n"); }
-sizeof      { printf("KW_SIZEOF\n"); }
-static      { printf("KW_STATIC\n"); }
-struct      { printf("KW_STRUCT\n"); }
-switch      { printf("KW_SWITCH\n"); }
-typedef     { printf("KW_TYPEDEF\n"); }
-union       { printf("KW_UNION\n"); }
-unsigned    { printf("KW_UNSIGNED\n"); }
-void        { printf("KW_VOID\n"); }
-volatile    { printf("KW_VOLATILE\n"); }
-while       { printf("KW_WHILE\n"); }
-
-"//".*     { /* Ignorar comentários de linha */ }
-
-"/*"([^*]|\*+[^*/])*\*+\/    { /* Ignorar comentários de bloco */ }
-
-"=="|"\*\*"|"--"    { printf("POUNCTUATORS(%s)\n", yytext);}
-
-[\[\]\(\)\{\}\,\:\;\*\==\=\#\.\~]    { printf("POUNCTUATORS(%s)\n", yytext);}
-
-[\"\w]    { printf("STRING(%s)\n", yytext);}
-
-[\const\w=]    { printf("CONST(%s)\n", yytext);}
-
-[a-zA-Z_][a-zA-Z0-9_]*  { printf("IDENT(%s)\n", yytext); }
-
-[0-9]+(\.[0-9]+)?  { printf("NUMBER(%s)\n", yytext); }
-
-[+\-*/=]   { printf("OPERATOR(%s)\n", yytext); }
+auto        { return AUTO; }
+break       { return BREAK; }
+case        { return CASE; }
+char        { return CHAR; }
+const       { return CONST; }
+continue    { return CONTINUE; }
+default     { return DEFAULT; }
+do          { return DO; }
+double      { return DOUBLE; }
+else        { return ELSE; }
+enum        { return ENUM; }
+extern      { return EXTERN; }
+float       { return FLOAT; }
+for         { return FOR; }
+goto        { return GOTO; }
+if          { return IF; }
+int         { return INT; }
+long        { return LONG; }
+register    { return INT; }
+return      { return RETURN; }
+short       { return SHORT; }
+signed      { return SIGNED; }
+sizeof      { return SIZEOF; }
+static      { return STATIC; }
+struct      { return STRUCT; }
+switch      { return SWITCH; }
+typedef     { return TYPEDEF; }
+union       { return UNION; }
+unsigned    { return UNSIGNED; }
+void        { return VOID; }
+volatile    { return VOLATILE; }
+while       { return WHILE; }
 
 [ \t\n]+  { /* Não faz nada */ }
+
+"//".*     { /* Ignorar comentários de linha */ }
+"/*"([^*]|\*+[^*/])*\*+\/    { /* Ignorar comentários de bloco */ }
+
+"=="   { return EQ; }
+"++"   { return INCREMENT; }
+"--"   { return DECREMENT; }
+"+="   { return PLUS_ASSIGN; }
+"-="   { return MINUS_ASSIGN; }
+"*="   { return TIMES_ASSIGN; }
+"/="   { return DIVIDE_ASSIGN; }
+"%="   { return MOD_ASSIGN; }
+"!="   { return NEQ; }
+"<="   { return LEQ; }
+">="   { return GEQ; }
+"->"   { return ARROW; }
+"+"    { return PLUS; }
+"-"    { return MINUS; }
+"*"    { return TIMES; }
+"/"    { return DIVIDE; }
+"^"    { return POWER; } 
+"%"    { return MOD; }
+"="    { return ASSIGN; }
+"<"    { return LT; }
+">"    { return GT; }
+"["    { return LBRACKET; }
+"]"    { return RBRACKET; }
+"("    { return LPAREN; }
+")"    { return RPAREN; }
+"{"    { return LBRACE; }
+"}"    { return RBRACE; }
+","    { return COMMA; }
+":"    { return COLON; }
+";"    { return SEMICOLON; }
+"&&"   { return AND; }
+"||"   { return OR; }
+"!"    { return NOT; }
+
+[\"\w]    { return STRING; }
+
+[\const\w=]    { return CONST; }
+
+[a-zA-Z_][a-zA-Z0-9_]*  { return IDENT; }
+
+[0-9]+(\.[0-9]+)?  { return NUMBER; }
 
 .  { printf("UNKNOWN(%s)\n", yytext); }
 
@@ -65,10 +94,4 @@ while       { printf("KW_WHILE\n"); }
 /* Função auxiliar do Flex (quando termina o arquivo de entrada) */
 int yywrap(void) {
     return 1;
-}
-
-/* Função principal: executa o analisador léxico */
-int main(void) {
-    yylex();
-    return 0;
 }
