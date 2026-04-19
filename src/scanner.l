@@ -19,11 +19,11 @@ double      { /* return DOUBLE; */ }
 else        { /* return ELSE; */ }
 enum        { /* return ENUM; */ }
 extern      { /* return EXTERN; */ }
-float       { /* return FLOAT; */ }
+float       {  return FLOAT;  }
 for         { /* return FOR; */ }
 goto        { /* return GOTO; */ }
 if          { /* return IF; */ }
-int         { /* return INT; */ }
+int         {  return INT;  }
 long        { /* return LONG; */ }
 return      { /* return RETURN; */ }
 short       { /* return SHORT; */ }
@@ -56,24 +56,24 @@ while       { /* return WHILE; */ }
 "<="   { /* return LEQ; */ }
 ">="   { /* return GEQ; */ }
 "->"   { /* return ARROW; */ }
-"+"    { /* return PLUS; */ }
-"-"    { /* return MINUS; */ }
-"*"    { /* return TIMES; */ }
-"/"    { /* return DIVIDE; */ }
+"+"    {  return PLUS;  }
+"-"    {  return MINUS;  }
+"*"    {  return TIMES;  }
+"/"    {  return DIVIDE;  }
 "^"    { /* return POWER; */ } 
 "%"    { /* return MOD; */ }
-"="    { /* return ASSIGN; */ }
+"="    {  return ASSIGN;  }
 "<"    { /* return LT; */ }
 ">"    { /* return GT; */ }
 "["    { /* return LBRACKET; */ }
 "]"    { /* return RBRACKET; */ }
-"("    { /* return LPAREN; */ }
-")"    { /* return RPAREN; */ }
+"("    {  return LPAREN;  }
+")"    {  return RPAREN;  }
 "{"    { /* return LBRACE; */ }
 "}"    { /* return RBRACE; */ }
 ","    { /* return COMMA; */ }
 ":"    { /* return COLON; */ }
-";"    { /* return SEMICOLON; */ }
+";"    {  return SEMICOLON;  }
 "&&"   { /* return AND; */ }
 "||"   { /* return OR; */ }
 "!"    { /* return NOT; */ }
@@ -82,9 +82,9 @@ while       { /* return WHILE; */ }
 
 [\const\w=]    { /* return CONST; */ }
 
-[a-zA-Z_][a-zA-Z0-9_]*  { /* return IDENT; */ }
+[a-zA-Z_][a-zA-Z0-9_]*  {  return IDENT;  }
 
-[0-9]+(\.[0-9]+)?  { return NUM; }
+[0-9]+  { yylval.intValue = atoi(yytext); return NUM; } 
 
 .  { printf("UNKNOWN(%s)\n", yytext); }
 

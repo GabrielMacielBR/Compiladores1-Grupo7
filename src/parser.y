@@ -18,6 +18,9 @@ void yyerror(const char *s);
 /* Tokens sem valor semântico, mas com precedência */
 %token PLUS MINUS TIMES DIVIDE LPAREN RPAREN
 
+/* NOVOS TOKENS (Sincronizados com o scanner.l) */
+%token INT FLOAT IDENT ASSIGN SEMICOLON
+
 /* Declara precedência:
    - PLUS e MINUS têm menor precedência
    - TIMES e DIVIDE têm maior precedência */
@@ -28,6 +31,30 @@ void yyerror(const char *s);
 %type <intValue> expr
 
 %%
+
+/* A regra principal agora aceita múltiplos comandos */
+programa:
+      comando programa
+
+    | /* vazio */
+    ;
+
+comando:
+      declaracao
+    | atribuicao
+    ;
+
+/* Regra para: int x; */
+declaracao:
+    INT IDENT SEMICOLON { printf("INFO: Declaração de variável detectada.\n"); }
+
+    | FLOAT IDENT SEMICOLON { printf("INFO: Declaração de variável float detectada.\n"); }
+    ;
+
+/* Regra para: x = 10 + 2; */
+atribuicao:
+    IDENT ASSIGN expr SEMICOLON { printf("SUCESSO: Atribuição realizada. Resultado da expressão: %d\n", $3); }
+    ;
 
 expr:
       expr PLUS expr    { $$ = $1 + $3; }
@@ -41,6 +68,7 @@ expr:
 %%
 
 int main(void) {
+    printf("Analisador pronto! Digite comandos como 'int x;' ou 'x = 10 + 5;'\n");
     return yyparse();
 }
 
