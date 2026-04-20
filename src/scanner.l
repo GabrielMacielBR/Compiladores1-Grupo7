@@ -44,7 +44,7 @@ while       { /* return WHILE; */ }
 "//".*     { /* Ignorar comentários de linha */ }
 "/*"([^*]|\*+[^*/])*\*+\/    { /* Ignorar comentários de bloco */ }
 
-"=="   { /* return EQ; */ }
+"=="   { return EQ; }
 "++"   { /* return INCREMENT; */ }
 "--"   { /* return DECREMENT; */ }
 "+="   { /* return PLUS_ASSIGN; */ }
@@ -52,9 +52,9 @@ while       { /* return WHILE; */ }
 "*="   { /* return TIMES_ASSIGN; */ }
 "/="   { /* return DIVIDE_ASSIGN; */ }
 "%="   { /* return MOD_ASSIGN; */ }
-"!="   { /* return NEQ; */ }
-"<="   { /* return LEQ; */ }
-">="   { /* return GEQ; */ }
+"!="   { return NEQ; }
+"<="   { return LEQ; }
+">="   { return GEQ; }
 "->"   { /* return ARROW; */ }
 "+"    {  return PLUS;  }
 "-"    {  return MINUS;  }
@@ -63,8 +63,8 @@ while       { /* return WHILE; */ }
 "^"    { /* return POWER; */ } 
 "%"    { /* return MOD; */ }
 "="    {  return ASSIGN;  }
-"<"    { /* return LT; */ }
-">"    { /* return GT; */ }
+"<"    { return LT; }
+">"    { return GT; }
 "["    { /* return LBRACKET; */ }
 "]"    { /* return RBRACKET; */ }
 "("    {  return LPAREN;  }
@@ -74,9 +74,9 @@ while       { /* return WHILE; */ }
 ","    { /* return COMMA; */ }
 ":"    { /* return COLON; */ }
 ";"    {  return SEMICOLON;  }
-"&&"   { /* return AND; */ }
-"||"   { /* return OR; */ }
-"!"    { /* return NOT; */ }
+"&&"   { return AND; }
+"||"   { return OR; }
+"!"    { return NOT; }
 
 \"([^\"\n]*)\" { /* return STRING; */ }
 
