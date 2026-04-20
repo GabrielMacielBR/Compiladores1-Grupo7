@@ -21,6 +21,9 @@ void yyerror(const char *s);
 /* NOVOS TOKENS (Sincronizados com o scanner.l) */
 %token INT FLOAT IDENT ASSIGN SEMICOLON
 
+/* Define o símbolo inicial */
+%start input
+
 /* Declara precedência:
    - PLUS e MINUS têm menor precedência
    - TIMES e DIVIDE têm maior precedência */
@@ -32,22 +35,27 @@ void yyerror(const char *s);
 
 %%
 
-/* A regra principal agora aceita múltiplos comandos */
-programa:
-      comando programa
-
-    | /* vazio */
+/* Regras da gramatica */
+input:
+      /* vazio */
+    | input comando
+    | input error SEMICOLON { 
+          fprintf(stderr, "[ERRO SINTATICO] Erro recuperado ate ';'\n");
+          yyerrok; /* reset de erro */
+          yyclearin; /* limpamos o token de lookahead */
+      }
     ;
 
 comando:
       declaracao
     | atribuicao
+    | expr SEMICOLON      { printf("Resultado: %d\n", $1); }
     ;
 
 /* Regra para: int x; */
 declaracao:
     INT IDENT SEMICOLON { printf("INFO: Declaração de variável detectada.\n"); }
-
+    
     | FLOAT IDENT SEMICOLON { printf("INFO: Declaração de variável float detectada.\n"); }
     ;
 
@@ -57,18 +65,25 @@ atribuicao:
     ;
 
 expr:
-      expr PLUS expr    { $$ = $1 + $3; }
-    | expr MINUS expr   { $$ = $1 - $3; }
-    | expr TIMES expr   { $$ = $1 * $3; }
-    | expr DIVIDE expr  { $$ = $1 / $3; }
-    | LPAREN expr RPAREN{ $$ = $2; }
-    | NUM               { $$ = $1; }
+      expr PLUS expr       { $$ = $1 + $3; }
+    | expr MINUS expr      { $$ = $1 - $3; }
+    | expr TIMES expr      { $$ = $1 * $3; }
+    | expr DIVIDE expr     { 
+          if ($3 == 0) {
+             fprintf(stderr, "[ERRO SEMANTICO] Divisao por zero!\n");
+             $$ = 0; 
+          } else {
+             $$ = $1 / $3;
+          }
+        }
+    | LPAREN expr RPAREN   { $$ = $2; }
+    | NUM                  { $$ = $1; }
     ;
 
 %%
 
 int main(void) {
-    printf("Analisador pronto! Digite comandos como 'int x;' ou 'x = 10 + 5;'\n");
+    printf("Digite expressoes terminadas com ';'. Pressione Ctrl+D para encerrar.\n");
     return yyparse();
 }
 
