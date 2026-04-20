@@ -15,16 +15,11 @@ void yyerror(const char *s);
 /* Declaracao de tokens e seus tipos */
 %token <intValue> NUM
 %token INT FLOAT IDENT ASSIGN SEMICOLON
-%token PLUS MINUS TIMES DIVIDE LPAREN RPAREN
-%token EQ NEQ LT GT LEQ GEQ AND OR NOT
+%token PLUS MINUS TIMES DIVIDE LPAREN RPAREN LBRACE RBRACE
+%token EQ NEQ LT GT LEQ GEQ AND OR NOT INCREMENT DECREMENT
+%token WHILE FOR DO
 
-%type <intValue> expr
-%type <intValue> expr_or
-%type <intValue> expr_and
-%type <intValue> expr_comp
-%type <intValue> expr_arit
-%type <intValue> expr_unaria
-%type <intValue> expr_primaria
+%type <intValue> expr expr_or expr_and expr_comp expr_arit expr_unaria expr_primaria
 
 /* Regras de precedencia e associatividade */
 %left OR
@@ -51,23 +46,36 @@ input:
     ;
 
 comando:
-      declaracao
-    | atribuicao
+      declaracao SEMICOLON
+    | atribuicao SEMICOLON
     | expr SEMICOLON { printf("Resultado: %d\n", $1); }
+    | loop
+    ;
+
+comandos:
+      /* vazio */
+    | comandos comando
     ;
 
 /* Regra para: int x; */
 declaracao:
-    INT IDENT SEMICOLON { printf("INFO: Declaração de variável detectada.\n"); }
-
-    | FLOAT IDENT SEMICOLON { printf("INFO: Declaração de variável float detectada.\n"); }
+      INT IDENT    { printf("INFO: Declaração de variável detectada.\n"); }
+    | FLOAT IDENT  { printf("INFO: Declaração de variável float detectada.\n"); }
+    | INT IDENT ASSIGN expr { printf("INFO: Declaração de variável com inicialização detectada. Valor: %d\n", $4); }
+    | FLOAT IDENT ASSIGN expr { printf("INFO: Declaração de variável float com inicialização detectada. Valor: %d\n", $4); }
     ;
 
 /* Regra para: x = 10 + 2; */
 atribuicao:
-    IDENT ASSIGN expr SEMICOLON { printf("SUCESSO: Atribuição realizada. Resultado da expressão: %d\n", $3); }
+      IDENT ASSIGN expr { printf("SUCESSO: Atribuição realizada. Resultado da expressão: %d\n", $3); }
+    | IDENT INCREMENT   { printf("INFO: incremento posfixado detectado\n"); }
+    | IDENT DECREMENT   { printf("INFO: decremento posfixado detectado\n"); }
+    | INCREMENT IDENT   { printf("INFO: incremento prefixado detectado\n"); }
+    | DECREMENT IDENT   { printf("INFO: decremento prefixado detectado\n"); }
     ;
 
+/* Hierarquia de expressões com precedência:
+   lógica -> comparação -> aritmética -> unária -> primária */
 expr:
     expr_or { $$ = $1; }
     ;
@@ -116,6 +124,40 @@ expr_unaria:
 expr_primaria:
       LPAREN expr RPAREN                 { $$ = $2; }
     | NUM                                { $$ = $1; }
+    | IDENT                              { $$ = 0;  } //Valor placeholder
+    ;
+
+bloco: 
+    LBRACE comandos RBRACE {printf("INFO: Bloco de codigo detectado\n");}
+    ;
+
+/* Laços WHILE e FOR e DO...WHILE */
+
+init_for:
+      declaracao 
+    | atribuicao 
+    | /* vazio */
+    ;
+
+cond_for:
+    expr
+    | /* vazio */
+    ;
+
+step_for:
+      atribuicao
+    | /* vazio */
+    ;
+
+corpo_loop:
+      bloco
+    | comando
+    ;
+
+loop:
+      WHILE LPAREN expr RPAREN corpo_loop {printf("INFO: Laço WHILE detectado\n");}
+    | FOR LPAREN init_for SEMICOLON cond_for SEMICOLON step_for RPAREN corpo_loop {printf("INFO: Laço FOR detectado\n");}
+    | DO corpo_loop WHILE LPAREN expr RPAREN SEMICOLON {printf("INFO: Laço DO...WHILE detectado\n");}
     ;
 
 %%

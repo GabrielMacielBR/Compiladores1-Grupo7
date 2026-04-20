@@ -14,13 +14,13 @@ char        { /* return CHAR; */ }
 const       { /* return CONST; */ }
 continue    { /* return CONTINUE; */ }
 default     { /* return DEFAULT; */ }
-do          { /* return DO; */ }
+do          { return DO; }
 double      { /* return DOUBLE; */ }
 else        { /* return ELSE; */ }
 enum        { /* return ENUM; */ }
 extern      { /* return EXTERN; */ }
 float       {  return FLOAT;  }
-for         { /* return FOR; */ }
+for         { return FOR; }
 goto        { /* return GOTO; */ }
 if          { /* return IF; */ }
 int         {  return INT;  }
@@ -37,25 +37,25 @@ union       { /* return UNION; */ }
 unsigned    { /* return UNSIGNED; */ }
 void        { /* return VOID; */ }
 volatile    { /* return VOLATILE; */ }
-while       { /* return WHILE; */ }
+while       { return WHILE; }
 
-[ \t\n]+  { /* Não faz nada */ }
+[ \t\n]+    { /* ignora espaços, tabs e quebras de linha */ }
 
 "//".*     { /* Ignorar comentários de linha */ }
 "/*"([^*]|\*+[^*/])*\*+\/    { /* Ignorar comentários de bloco */ }
 
 "=="   { return EQ; }
-"++"   { /* return INCREMENT; */ }
-"--"   { /* return DECREMENT; */ }
+"!="   { return NEQ; }
+"<="   { return LEQ; }
+">="   { return GEQ; }
+"->"   { /* return ARROW; */ }
+"++"   { return INCREMENT; }
+"--"   { return DECREMENT; }
 "+="   { /* return PLUS_ASSIGN; */ }
 "-="   { /* return MINUS_ASSIGN; */ }
 "*="   { /* return TIMES_ASSIGN; */ }
 "/="   { /* return DIVIDE_ASSIGN; */ }
 "%="   { /* return MOD_ASSIGN; */ }
-"!="   { return NEQ; }
-"<="   { return LEQ; }
-">="   { return GEQ; }
-"->"   { /* return ARROW; */ }
 "+"    {  return PLUS;  }
 "-"    {  return MINUS;  }
 "*"    {  return TIMES;  }
@@ -69,8 +69,8 @@ while       { /* return WHILE; */ }
 "]"    { /* return RBRACKET; */ }
 "("    {  return LPAREN;  }
 ")"    {  return RPAREN;  }
-"{"    { /* return LBRACE; */ }
-"}"    { /* return RBRACE; */ }
+"{"    { return LBRACE; }
+"}"    { return RBRACE; }
 ","    { /* return COMMA; */ }
 ":"    { /* return COLON; */ }
 ";"    {  return SEMICOLON;  }
