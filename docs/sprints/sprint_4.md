@@ -9,7 +9,7 @@ Implementar o analisador sintático.
 ## Atividades / Issues
 - [x] Implementar parser  
 - [x] Integrar com léxico  
-- [x] Testes sintáticos  
+- [ ] Testes sintáticos  
 
 ## Resultados
 - Estrutura inicial do parser implementada com regras de programa/comando.
