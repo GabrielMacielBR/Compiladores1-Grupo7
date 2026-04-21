@@ -16,14 +16,14 @@ continue    { /* return CONTINUE; */ }
 default     { /* return DEFAULT; */ }
 do          { return DO; }
 double      { /* return DOUBLE; */ }
-else        { /* return ELSE; */ }
+else        { return ELSE; }
 enum        { /* return ENUM; */ }
 extern      { /* return EXTERN; */ }
-float       {  return FLOAT;  }
+float       { return FLOAT; }
 for         { return FOR; }
 goto        { /* return GOTO; */ }
-if          { /* return IF; */ }
-int         {  return INT;  }
+if          { return IF; }
+int         { return INT; }
 long        { /* return LONG; */ }
 return      { /* return RETURN; */ }
 short       { /* return SHORT; */ }
@@ -56,24 +56,24 @@ while       { return WHILE; }
 "*="   { /* return TIMES_ASSIGN; */ }
 "/="   { /* return DIVIDE_ASSIGN; */ }
 "%="   { /* return MOD_ASSIGN; */ }
-"+"    {  return PLUS;  }
-"-"    {  return MINUS;  }
-"*"    {  return TIMES;  }
-"/"    {  return DIVIDE;  }
+"+"    { return PLUS; }
+"-"    { return MINUS; }
+"*"    { return TIMES; }
+"/"    { return DIVIDE; }
 "^"    { /* return POWER; */ } 
 "%"    { /* return MOD; */ }
-"="    {  return ASSIGN;  }
+"="    { return ASSIGN; }
 "<"    { return LT; }
 ">"    { return GT; }
 "["    { /* return LBRACKET; */ }
 "]"    { /* return RBRACKET; */ }
-"("    {  return LPAREN;  }
-")"    {  return RPAREN;  }
+"("    { return LPAREN; }
+")"    { return RPAREN; }
 "{"    { return LBRACE; }
 "}"    { return RBRACE; }
 ","    { /* return COMMA; */ }
 ":"    { /* return COLON; */ }
-";"    {  return SEMICOLON;  }
+";"    { return SEMICOLON; }
 "&&"   { return AND; }
 "||"   { return OR; }
 "!"    { return NOT; }

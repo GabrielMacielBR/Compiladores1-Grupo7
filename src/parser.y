@@ -18,6 +18,7 @@ void yyerror(const char *s);
 %token PLUS MINUS TIMES DIVIDE LPAREN RPAREN LBRACE RBRACE
 %token EQ NEQ LT GT LEQ GEQ AND OR NOT INCREMENT DECREMENT
 %token WHILE FOR DO
+%token IF ELSE
 
 %type <intValue> expr expr_or expr_and expr_comp expr_arit expr_unaria expr_primaria
 
@@ -37,7 +38,8 @@ void yyerror(const char *s);
 /* Regras da gramatica */
 input:
       /* vazio */
-    | input comando
+    | input statement
+    | input statement '\n'
     | input error SEMICOLON { 
           fprintf(stderr, "[ERRO SINTATICO] Erro recuperado ate ';'\n");
           yyerrok; /* reset de erro */
@@ -45,20 +47,21 @@ input:
       }
     ;
 
-comando:
-      declaracao SEMICOLON
-    | atribuicao SEMICOLON
+statement:
+      declaration SEMICOLON
+    | assignment SEMICOLON
     | expr SEMICOLON { printf("Resultado: %d\n", $1); }
     | loop
+    | conditional
     ;
 
-comandos:
+statements:
       /* vazio */
-    | comandos comando
+    | statements statement
     ;
 
 /* Regra para: int x; */
-declaracao:
+declaration:
       INT IDENT    { printf("INFO: Declaração de variável detectada.\n"); }
     | FLOAT IDENT  { printf("INFO: Declaração de variável float detectada.\n"); }
     | INT IDENT ASSIGN expr { printf("INFO: Declaração de variável com inicialização detectada. Valor: %d\n", $4); }
@@ -66,7 +69,7 @@ declaracao:
     ;
 
 /* Regra para: x = 10 + 2; */
-atribuicao:
+assignment:
       IDENT ASSIGN expr { printf("SUCESSO: Atribuição realizada. Resultado da expressão: %d\n", $3); }
     | IDENT INCREMENT   { printf("INFO: incremento posfixado detectado\n"); }
     | IDENT DECREMENT   { printf("INFO: decremento posfixado detectado\n"); }
@@ -127,15 +130,15 @@ expr_primaria:
     | IDENT                              { $$ = 0;  } //Valor placeholder
     ;
 
-bloco: 
-    LBRACE comandos RBRACE {printf("INFO: Bloco de codigo detectado\n");}
+block: 
+    LBRACE statements RBRACE {printf("INFO: Bloco de codigo detectado\n");}
     ;
 
 /* Laços WHILE e FOR e DO...WHILE */
 
 init_for:
-      declaracao 
-    | atribuicao 
+      declaration 
+    | assignment 
     | /* vazio */
     ;
 
@@ -145,21 +148,27 @@ cond_for:
     ;
 
 step_for:
-      atribuicao
+      assignment
     | /* vazio */
     ;
 
-corpo_loop:
-      bloco
-    | comando
+body:
+    | statement
+    | block
     ;
 
 loop:
-      WHILE LPAREN expr RPAREN corpo_loop {printf("INFO: Laço WHILE detectado\n");}
-    | FOR LPAREN init_for SEMICOLON cond_for SEMICOLON step_for RPAREN corpo_loop {printf("INFO: Laço FOR detectado\n");}
-    | DO corpo_loop WHILE LPAREN expr RPAREN SEMICOLON {printf("INFO: Laço DO...WHILE detectado\n");}
+      WHILE LPAREN expr RPAREN body {printf("INFO: Laço WHILE detectado\n");}
+    | FOR LPAREN init_for SEMICOLON cond_for SEMICOLON step_for RPAREN body {printf("INFO: Laço FOR detectado\n");}
+    | DO body WHILE LPAREN expr RPAREN SEMICOLON {printf("INFO: Laço DO...WHILE detectado\n");}
     ;
 
+/* Condicionais if-else */
+conditional:
+      IF LPAREN expr RPAREN body { printf("SUCESSO: Declaração if realizada.\n"); }
+    | IF LPAREN expr RPAREN body ELSE body { printf("SUCESSO: Declaração if-else realizada.\n"); }
+    ;
+    
 %%
 
 int main(void) {
