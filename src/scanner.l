@@ -72,7 +72,8 @@ while       { return WHILE; }
 "{"    { return LBRACE; }
 "}"    { return RBRACE; }
 ","    { /* return COMMA; */ }
-":"    { /* return COLON; */ }
+"?"    { return QUESTION; }
+":"    { return COLON;}
 ";"    { return SEMICOLON; }
 "&&"   { return AND; }
 "||"   { return OR; }

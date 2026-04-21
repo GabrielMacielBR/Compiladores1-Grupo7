@@ -14,11 +14,11 @@ void yyerror(const char *s);
 
 /* Declaracao de tokens e seus tipos */
 %token <intValue> NUM
-%token INT FLOAT IDENT ASSIGN SEMICOLON
-%token PLUS MINUS TIMES DIVIDE LPAREN RPAREN LBRACE RBRACE
-%token EQ NEQ LT GT LEQ GEQ AND OR NOT INCREMENT DECREMENT
-%token WHILE FOR DO
-%token IF ELSE
+%token INT FLOAT IDENT 
+%token PLUS MINUS TIMES DIVIDE
+%token SEMICOLON COLON QUESTION LPAREN RPAREN LBRACE RBRACE
+%token ASSIGN EQ NEQ LT GT LEQ GEQ AND OR NOT INCREMENT DECREMENT
+%token IF ELSE WHILE FOR DO
 
 %type <intValue> expr expr_or expr_and expr_comp expr_arit expr_unaria expr_primaria
 
@@ -30,6 +30,9 @@ void yyerror(const char *s);
 %left TIMES DIVIDE
 %right NOT
 
+%nonassoc THEN
+%nonassoc ELSE
+
 /* Símbolo inicial */
 %start input
 
@@ -39,7 +42,6 @@ void yyerror(const char *s);
 input:
       /* vazio */
     | input statement
-    | input statement '\n'
     | input error SEMICOLON { 
           fprintf(stderr, "[ERRO SINTATICO] Erro recuperado ate ';'\n");
           yyerrok; /* reset de erro */
@@ -165,8 +167,9 @@ loop:
 
 /* Condicionais if-else */
 conditional:
-      IF LPAREN expr RPAREN body { printf("SUCESSO: Declaração if realizada.\n"); }
+      IF LPAREN expr RPAREN body %prec THEN  { printf("SUCESSO: Declaração if realizada.\n"); }
     | IF LPAREN expr RPAREN body ELSE body { printf("SUCESSO: Declaração if-else realizada.\n"); }
+    | expr QUESTION body COLON body { printf("SUCESSO: Declaração condicional com operador ternário realizada.\n"); }
     ;
     
 %%
