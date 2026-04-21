@@ -153,7 +153,7 @@ step_for:
     ;
 
 body:
-    | statement
+      statement
     | block
     ;
 

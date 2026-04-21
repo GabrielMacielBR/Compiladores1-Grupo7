@@ -18,4 +18,4 @@ Analisador léxico funcional.
 ## Dificuldades
 Tratamento de precedência de terminais.
 
-## Observaçõe
+## Observações
