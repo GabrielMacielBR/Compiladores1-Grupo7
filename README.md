@@ -31,21 +31,25 @@ No Ubuntu/WSL, instale com:
 ```bash
 sudo apt update
 sudo apt install -y gcc make bison flex libfl-dev
+```
 
 ### Compilação
 
 A partir da raiz do projeto, execute:
 
+```bash
 cd src
 make
+```
 
 Esse processo gera o executável do compilador.
 
 ### Execução dos testes
 Após a compilação, execute os testes com:
-
+```bash
 cd ../tests
 for f in *.c; do echo "Arquivo: $f"; ../src/parser.o < "$f"; echo "---"; done
+```
 
 Esse comando percorre todos os arquivos .c da pasta tests, executa o compilador para cada teste e exibe a saída correspondente.
 
