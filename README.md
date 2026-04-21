@@ -16,7 +16,76 @@ A proposta do projeto é receber programas escritos em um subconjunto da linguag
 
 ## Instalação e Execução
 
+### Pré-requisitos
+
+Para compilar e executar o projeto, é necessário ter instalado em um ambiente Linux ou WSL:
+
+- `gcc`
+- `make`
+- `bison`
+- `flex`
+- `libfl-dev`
+
+No Ubuntu/WSL, instale com:
+
+```bash
+sudo apt update
+sudo apt install -y gcc make bison flex libfl-dev
+
+### Compilação
+
+A partir da raiz do projeto, execute:
+
+cd src
+make
+
+Esse processo gera o executável do compilador.
+
+### Execução dos testes
+Após a compilação, execute os testes com:
+
+cd ../tests
+for f in *.c; do echo "Arquivo: $f"; ../src/parser.o < "$f"; echo "---"; done
+
+Esse comando percorre todos os arquivos .c da pasta tests, executa o compilador para cada teste e exibe a saída correspondente.
 
 # Equipe
 
 Conheça o grupo deste projeto: 
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <a href="https://github.com/GabrielMacielBR">
+          <img src="https://avatars.githubusercontent.com/u/119356252?v=4" width="100px;" alt="Gabriel Maciel"/><br>
+          <sub><b>Gabriel Maciel</b></sub>
+        </a>
+      </td>
+      <td align="center">
+        <a href="https://github.com/libruna">
+          <img src="https://avatars.githubusercontent.com/u/83987201?v=4" width="100px;" alt="Bruna Lima"/><br>
+          <sub><b>Bruna Lima</b></sub>
+        </a>
+      </td>
+      <td align="center">
+        <a href="https://github.com/CauaNicolas">
+          <img src="https://avatars.githubusercontent.com/u/79241219?v=4" width="100px;" alt="Caua Nicolas"/><br>
+          <sub><b>Caua Nicolas</b></sub>
+        </a>
+      </td>
+      <td align="center">
+        <a href="https://github.com/Diaxiz">
+          <img src="https://avatars.githubusercontent.com/u/88682217?v=4" width="100px;" alt="Diassis"/><br>
+          <sub><b>Diassis</b></sub>
+        </a>
+      </td>
+      <td align="center">
+        <a href="https://github.com/IsaqueSH">
+          <img src="https://avatars.githubusercontent.com/u/101431986?v=4" width="100px;" alt="Isaque Santos"/><br>
+          <sub><b>Isaque Santos</b></sub>
+        </a>
+      </td>
+    </tr>
+  </table>
+</div>
