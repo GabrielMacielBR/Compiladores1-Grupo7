@@ -1,4 +1,4 @@
-# Sprint 3 — Implementação do Léxico
+# Sprint 3
 
 **Período:** 30/03 a 05/04  
 **Status:** ✅ Concluída  
@@ -7,7 +7,7 @@
 Implementar o analisador léxico.
 
 ## Atividades / Issues
-- [x] Implementar scanner  
+- [x] Implementar scanner 
 - [x] Reconhecimento de tokens  
 - [x] Criar estrutura de saída  
 - [x] Testes iniciais  
@@ -16,7 +16,6 @@ Implementar o analisador léxico.
 Analisador léxico funcional.
 
 ## Dificuldades
-Tratamento de alguns padrões de tokens.
+Tratamento de precedência de terminais.
 
-## Observações
-Etapa concluída com sucesso e pronta para integração.
+## Observaçõe

@@ -1,4 +1,4 @@
-# Sprint 1 — Planejamento e Fundamentação
+# Sprint 1
 
 **Período:** 16/03 a 22/03  
 **Status:** ✅ Concluída  
@@ -7,10 +7,9 @@
 Entender a proposta do projeto e estudar conceitos de compiladores.
 
 ## Atividades / Issues
-- Entender proposta da disciplina  
-- Estudar conceitos de compiladores  
-- Definir objetivo do projeto  
-- Levantar requisitos  
+- [x] Entender proposta da disciplina  
+- [x] Estudar conceitos de compiladores  
+- [x] Definir escopo do projeto   
 
 ##  Resultados
 Base teórica definida e escopo inicial do projeto estabelecido.

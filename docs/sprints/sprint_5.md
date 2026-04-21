@@ -1,18 +1,23 @@
-# Sprint 5 — Finalização do Sintático
+# Sprint 5
 
 **Período:** 13/04 a 19/04  
-**Status:** ⬜ Não iniciada  
+**Status:** ✅ Concluída  
 
 ## Objetivo
-Finalizar o analisador sintático.
+Implementação do analisador sintático para suporte a: atribuição, declaração, condicional, laços e funções.
 
 ## Atividades / Issues
-- [X] Corrigir erros do parser  
-- [ ] Implementar tratamento de erros  
-- [X] Validar gramática  
+- [x] Corrigir erros de integração do parser com o analisar léxico  
+- [x] Validar gramática
 
 ## Resultados
-- Parser integrado com o analisador léxico e compilando com sucesso.
+- Integração dos analisadores léxico e sintático para: atribuição, declaração e laços.
+- Regras sintáticas básicas implementadas para:
+	- declaração de variáveis (`int` e `float`)
+	- atribuição
+- Integração inicial com o analisador léxico concluída (scanner e parser compilando no fluxo do `make`).
+- Tratamento sintático inicial de erros implementado com recuperação até `;`.
+
 - Estrutura de expressões organizada por níveis de precedência:
 	- `expr`
 	- `expr_or`
@@ -21,17 +26,22 @@ Finalizar o analisador sintático.
 	- `expr_arit`
 	- `expr_unaria`
 	- `expr_primaria`
+
 - Operadores comparativos implementados e validados:
 	- `==`, `!=`, `<`, `<=`, `>`, `>=`
+
 - Operadores lógicos implementados e validados:
 	- `&&`, `||`, `!`
+
 - Precedência validada em execução:
 	- comparação com precedência maior que `&&`
 	- `&&` com precedência maior que `||`
 	- `!` no nível unário
+
 - Suporte completo aos laços `while`, `for` e `do...while` com duas formas de corpo:
 	- bloco com chaves (`{ ... }`)
 	- instrução única sem chaves
+
 - `for` validado com componentes opcionais:
 	- init opcional
 	- condição opcional
@@ -42,6 +52,11 @@ Finalizar o analisador sintático.
 Entrada utilizada no parser:
 
 ```text
+int x;
+float y;
+x = 10 + 5;
+20;
+
 1 < 2 || 3 < 4 && 0;
 1 < 2 && 3 < 4 || 0;
 1 < 2 || 3 > 4 && 5 < 6;
@@ -61,6 +76,12 @@ do k++; while (k < 2);
 Saídas observadas:
 
 ```text
+Digite expressoes terminadas com ';'. Pressione Ctrl+D para encerrar.
+INFO: Declaração de variável detectada.
+INFO: Declaração de variável float detectada.
+SUCESSO: Atribuição realizada. Resultado da expressão: 15
+Resultado: 20
+
 Resultado: 1
 Resultado: 1
 Resultado: 1
@@ -110,6 +131,7 @@ Comportamentos observados:
 
 ## Dificuldades
 - Ajuste de ambiguidade inicial nas regras de expressão.
+- Depuração de erros sintáticos durante integração.
 - Definição da melhor granularidade entre regras de expressão (estrutura mais didática vs. compacta).
 
 ## Observações
