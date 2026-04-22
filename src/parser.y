@@ -1,15 +1,23 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include "ast.h"
+#include "table.h"
 
 /* Prototipos para evitar avisos de funcao implicita */
 int yylex(void);
 void yyerror(const char *s);
+NodeAST *root = NULL;
 %}
+
+%code requires {
+#include "ast.h"
+}
 
 /* UNION para valores semanticos */
 %union {
     int intValue;
+    NodeAST *ast;
 }
 
 /* Declaracao de tokens e seus tipos */
