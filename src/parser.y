@@ -2,26 +2,34 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "ast.h"
+#include "table.h"
 
 /* Prototipos para evitar avisos de funcao implicita */
 int yylex(void);
 void yyerror(const char *s);
+
 int yydebug = 0;
+NodeAST *root = NULL;
 %}
+
+%code requires {
+#include "ast.h"
+}
 
 /* UNION para valores semanticos */
 %union {
   int intValue;
   char *id;
+  NodeAST *ast;
 }
 
 /* Declaracao de tokens e seus tipos */
 %token <intValue> NUM
-%token INT FLOAT
+%token INT FLOAT FUNC RETURN
 %token <id> IDENT
-%token ASSIGN SEMICOLON
-%token COMMA RETURN
-%token FUNC
+%token ASSIGN SEMICOLON COMMA
+%token COLON QUESTION
 %token PLUS MINUS TIMES DIVIDE LPAREN RPAREN LBRACE RBRACE
 %token EQ NEQ LT GT LEQ GEQ AND OR NOT INCREMENT DECREMENT
 %token WHILE FOR DO
@@ -37,6 +45,9 @@ int yydebug = 0;
 %left TIMES DIVIDE
 %right NOT
 %nonassoc LOWER_THAN_ELSE
+
+%nonassoc THEN
+%nonassoc ELSE
 
 /* Símbolo inicial */
 %start input
@@ -138,8 +149,8 @@ expr_unaria:
 expr_primaria:
       LPAREN expr RPAREN                 { $$ = $2; }
     | NUM                                { $$ = $1; }
-      | IDENT LPAREN arg_list_opt RPAREN   { printf("INFO: Chamada de função '%s'\n", $1); $$ = 0; }
-      | IDENT                              { $$ = 0;  } /* Valor placeholder para identificador */
+    | IDENT LPAREN arg_list_opt RPAREN   { printf("INFO: Chamada de função '%s'\n", $1); $$ = 0; }
+    | IDENT                              { $$ = 0;  } /* Valor placeholder para identificador */
     ;
 
 block: 
@@ -179,6 +190,7 @@ loop:
 conditional:
       IF LPAREN expr RPAREN statement %prec LOWER_THAN_ELSE { printf("SUCESSO: Declaração if realizada.\n"); }
     | IF LPAREN expr RPAREN statement ELSE statement { printf("SUCESSO: Declaração if-else realizada.\n"); }
+    | expr QUESTION body COLON body { printf("SUCESSO: Declaração condicional com operador ternário realizada.\n"); }
     ;
     
 /* Funções: definição, parâmetros e lista de argumentos */
@@ -209,7 +221,7 @@ arg_list:
       expr
     | arg_list COMMA expr
     ;
-    
+
 %%
 
 int main(void) {

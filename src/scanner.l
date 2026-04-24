@@ -74,15 +74,14 @@ while       { return WHILE; }
 "{"    { return LBRACE; }
 "}"    { return RBRACE; }
 ","    { return COMMA; }
-":"    { /* return COLON; */ }
+"?"    { return QUESTION; }
+":"    { return COLON; }
 ";"    { return SEMICOLON; }
 "&&"   { return AND; }
 "||"   { return OR; }
 "!"    { return NOT; }
 
 \"([^\"\n]*)\" { /* return STRING; */ }
-
-[\const\w=]    { /* return CONST; */ }
 
 [a-zA-Z_][a-zA-Z0-9_]*  { yylval.id = strdup(yytext); return IDENT; }
 
