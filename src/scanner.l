@@ -1,6 +1,7 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "parser.tab.h"  /* contém definições geradas pelo Bison (NUM, PLUS, etc.) */
 %}
 
@@ -21,11 +22,12 @@ enum        { /* return ENUM; */ }
 extern      { /* return EXTERN; */ }
 float       { return FLOAT; }
 for         { return FOR; }
+func        { return FUNC; }
 goto        { /* return GOTO; */ }
 if          { return IF; }
 int         { return INT; }
 long        { /* return LONG; */ }
-return      { /* return RETURN; */ }
+return      { return RETURN; }
 short       { /* return SHORT; */ }
 signed      { /* return SIGNED; */ }
 sizeof      { /* return SIZEOF; */ }
@@ -71,9 +73,9 @@ while       { return WHILE; }
 ")"    { return RPAREN; }
 "{"    { return LBRACE; }
 "}"    { return RBRACE; }
-","    { /* return COMMA; */ }
+","    { return COMMA; }
 "?"    { return QUESTION; }
-":"    { return COLON;}
+":"    { return COLON; }
 ";"    { return SEMICOLON; }
 "&&"   { return AND; }
 "||"   { return OR; }
@@ -81,9 +83,7 @@ while       { return WHILE; }
 
 \"([^\"\n]*)\" { /* return STRING; */ }
 
-[\const\w=]    { /* return CONST; */ }
-
-[a-zA-Z_][a-zA-Z0-9_]*  {  return IDENT;  }
+[a-zA-Z_][a-zA-Z0-9_]*  { yylval.id = strdup(yytext); return IDENT; }
 
 [0-9]+  { yylval.intValue = atoi(yytext); return NUM; } 
 

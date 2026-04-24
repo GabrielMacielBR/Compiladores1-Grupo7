@@ -1,12 +1,15 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "ast.h"
 #include "table.h"
 
 /* Prototipos para evitar avisos de funcao implicita */
 int yylex(void);
 void yyerror(const char *s);
+
+int yydebug = 0;
 NodeAST *root = NULL;
 %}
 
@@ -16,17 +19,21 @@ NodeAST *root = NULL;
 
 /* UNION para valores semanticos */
 %union {
-    int intValue;
-    NodeAST *ast;
+  int intValue;
+  char *id;
+  NodeAST *ast;
 }
 
 /* Declaracao de tokens e seus tipos */
 %token <intValue> NUM
-%token INT FLOAT IDENT 
-%token PLUS MINUS TIMES DIVIDE
-%token SEMICOLON COLON QUESTION LPAREN RPAREN LBRACE RBRACE
-%token ASSIGN EQ NEQ LT GT LEQ GEQ AND OR NOT INCREMENT DECREMENT
-%token IF ELSE WHILE FOR DO
+%token INT FLOAT FUNC RETURN
+%token <id> IDENT
+%token ASSIGN SEMICOLON COMMA
+%token COLON QUESTION
+%token PLUS MINUS TIMES DIVIDE LPAREN RPAREN LBRACE RBRACE
+%token EQ NEQ LT GT LEQ GEQ AND OR NOT INCREMENT DECREMENT
+%token WHILE FOR DO
+%token IF ELSE
 
 %type <intValue> expr expr_or expr_and expr_comp expr_arit expr_unaria expr_primaria
 
@@ -37,6 +44,7 @@ NodeAST *root = NULL;
 %left PLUS MINUS
 %left TIMES DIVIDE
 %right NOT
+%nonassoc LOWER_THAN_ELSE
 
 %nonassoc THEN
 %nonassoc ELSE
@@ -49,7 +57,9 @@ NodeAST *root = NULL;
 /* Regras da gramatica */
 input:
       /* vazio */
-    | input statement
+  | input statement
+  | input statement '\n'
+  | input function_definition
     | input error SEMICOLON { 
           fprintf(stderr, "[ERRO SINTATICO] Erro recuperado ate ';'\n");
           yyerrok; /* reset de erro */
@@ -63,6 +73,8 @@ statement:
     | expr SEMICOLON { printf("Resultado: %d\n", $1); }
     | loop
     | conditional
+    | RETURN expr SEMICOLON { printf("INFO: return com valor %d\n", $2); }
+    | RETURN SEMICOLON { printf("INFO: return sem valor\n"); }
     ;
 
 statements:
@@ -72,19 +84,19 @@ statements:
 
 /* Regra para: int x; */
 declaration:
-      INT IDENT    { printf("INFO: Declaração de variável detectada.\n"); }
-    | FLOAT IDENT  { printf("INFO: Declaração de variável float detectada.\n"); }
-    | INT IDENT ASSIGN expr { printf("INFO: Declaração de variável com inicialização detectada. Valor: %d\n", $4); }
-    | FLOAT IDENT ASSIGN expr { printf("INFO: Declaração de variável float com inicialização detectada. Valor: %d\n", $4); }
+      INT IDENT    { printf("INFO: Declaração de variável detectada: %s\n", $2); }
+    | FLOAT IDENT  { printf("INFO: Declaração de variável float detectada: %s\n", $2); }
+    | INT IDENT ASSIGN expr { printf("INFO: Declaração de variável com inicialização detectada: %s = %d\n", $2, $4); }
+    | FLOAT IDENT ASSIGN expr { printf("INFO: Declaração de variável float com inicialização detectada: %s = %d\n", $2, $4); }
     ;
 
 /* Regra para: x = 10 + 2; */
 assignment:
       IDENT ASSIGN expr { printf("SUCESSO: Atribuição realizada. Resultado da expressão: %d\n", $3); }
-    | IDENT INCREMENT   { printf("INFO: incremento posfixado detectado\n"); }
-    | IDENT DECREMENT   { printf("INFO: decremento posfixado detectado\n"); }
-    | INCREMENT IDENT   { printf("INFO: incremento prefixado detectado\n"); }
-    | DECREMENT IDENT   { printf("INFO: decremento prefixado detectado\n"); }
+    | IDENT INCREMENT   { printf("INFO: incremento posfixado detectado para %s\n", $1); }
+    | IDENT DECREMENT   { printf("INFO: decremento posfixado detectado para %s\n", $1); }
+    | INCREMENT IDENT   { printf("INFO: incremento prefixado detectado para %s\n", $2); }
+    | DECREMENT IDENT   { printf("INFO: decremento prefixado detectado para %s\n", $2); }
     ;
 
 /* Hierarquia de expressões com precedência:
@@ -137,7 +149,8 @@ expr_unaria:
 expr_primaria:
       LPAREN expr RPAREN                 { $$ = $2; }
     | NUM                                { $$ = $1; }
-    | IDENT                              { $$ = 0;  } //Valor placeholder
+    | IDENT LPAREN arg_list_opt RPAREN   { printf("INFO: Chamada de função '%s'\n", $1); $$ = 0; }
+    | IDENT                              { $$ = 0;  } /* Valor placeholder para identificador */
     ;
 
 block: 
@@ -173,13 +186,42 @@ loop:
     | DO body WHILE LPAREN expr RPAREN SEMICOLON {printf("INFO: Laço DO...WHILE detectado\n");}
     ;
 
-/* Condicionais if-else */
+/* Condicionais if-else (resolvem dangling-else) */
 conditional:
-      IF LPAREN expr RPAREN body %prec THEN  { printf("SUCESSO: Declaração if realizada.\n"); }
-    | IF LPAREN expr RPAREN body ELSE body { printf("SUCESSO: Declaração if-else realizada.\n"); }
+      IF LPAREN expr RPAREN statement %prec LOWER_THAN_ELSE { printf("SUCESSO: Declaração if realizada.\n"); }
+    | IF LPAREN expr RPAREN statement ELSE statement { printf("SUCESSO: Declaração if-else realizada.\n"); }
     | expr QUESTION body COLON body { printf("SUCESSO: Declaração condicional com operador ternário realizada.\n"); }
     ;
     
+/* Funções: definição, parâmetros e lista de argumentos */
+function_definition:
+  FUNC INT IDENT LPAREN parameter_list_opt RPAREN block { printf("INFO: Função definida: %s\n", $3); }
+    ;
+
+parameter_list_opt:
+      /* vazio */
+    | parameter_list
+    ;
+
+parameter_list:
+      parameter
+    | parameter_list COMMA parameter
+    ;
+
+parameter:
+      INT IDENT { printf("INFO: Parametro: %s\n", $2); }
+    ;
+
+arg_list_opt:
+      /* vazio */
+    | arg_list
+    ;
+
+arg_list:
+      expr
+    | arg_list COMMA expr
+    ;
+
 %%
 
 int main(void) {
