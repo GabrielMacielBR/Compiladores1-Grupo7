@@ -29,13 +29,12 @@ NodeAST *root = NULL;
 %token INT FLOAT FUNC RETURN
 %token <id> IDENT
 %token ASSIGN SEMICOLON COMMA
-%token COLON QUESTION
 %token PLUS MINUS TIMES DIVIDE LPAREN RPAREN LBRACE RBRACE
 %token EQ NEQ LT GT LEQ GEQ AND OR NOT INCREMENT DECREMENT
 %token WHILE FOR DO
 %token IF ELSE
 
-%type <ast> expr 
+%type <ast> expr input statement conditional statements block body
 
 /* Regras de precedencia e associatividade */
 %left OR
@@ -56,8 +55,16 @@ NodeAST *root = NULL;
 
 /* Regras da gramatica */
 input:
-        /* vazio */
-    | input statement
+        /* vazio */ { $$ = NULL; root = NULL; }
+    | input statement {
+        if ($1 == NULL) {
+          $$ = $2;
+          root = $2;
+        } else {
+          $$ = createNodeSeq($1, $2);
+          root = $$;
+        }
+      }
     //| input function_definition
     | input error SEMICOLON { 
       fprintf(stderr, "[ERRO SINTATICO] Erro recuperado ate ';'\n");
@@ -70,21 +77,25 @@ statement:
   //  declaration SEMICOLON
   //| assignment SEMICOLON
   |   expr SEMICOLON {
-    root = $1;
-    printf("\nÁrvore Sintática Abstrata (AST):\n");
-    printAST(root, 0);
-    printf("\n");
-    printTable();
+    $$ = $1;
   }
   //| loop
-  //| conditional
+  |   conditional {
+    $$ = $1;
+  }
   //| RETURN expr SEMICOLON { printf("INFO: return com valor %d\n", $2); }
   //| RETURN SEMICOLON { printf("INFO: return sem valor\n"); }
   ;
 
 statements:
-      /* vazio */
-    | statements statement
+      /* vazio */ { $$ = NULL; }
+    | statements statement {
+        if ($1 == NULL) {
+          $$ = $2;
+        } else {
+          $$ = createNodeSeq($1, $2);
+        }
+      }
     ;
 
 /* Regra para: int x; */
@@ -126,8 +137,8 @@ expr:
   ;
 
 
-block: 
-    LBRACE statements RBRACE {printf("INFO: Bloco de codigo detectado\n");}
+block:
+    LBRACE statements RBRACE { $$ = $2; }
     ;
 
 /* Laços WHILE e FOR e DO...WHILE */
@@ -161,9 +172,12 @@ loop:
 
 /* Condicionais if-else (resolvem dangling-else) */
 conditional:
-      IF LPAREN expr RPAREN statement %prec LOWER_THAN_ELSE { printf("SUCESSO: Declaração if realizada.\n"); }
-    | IF LPAREN expr RPAREN statement ELSE statement { printf("SUCESSO: Declaração if-else realizada.\n"); }
-    | expr QUESTION body COLON body { printf("SUCESSO: Declaração condicional com operador ternário realizada.\n"); }
+      IF LPAREN expr RPAREN body %prec LOWER_THAN_ELSE {
+        $$ = createNodeIf($3, $5, NULL);
+      }
+    | IF LPAREN expr RPAREN body ELSE body {
+        $$ = createNodeIf($3, $5, $7);
+      }
     ;
     
 /* Funções: definição, parâmetros e lista de argumentos */
@@ -199,7 +213,16 @@ arg_list:
 
 int main(void) {
     printf("Digite expressoes terminadas com ';'. Pressione Ctrl+D para encerrar.\n");
-    return yyparse();
+    yyparse();
+    
+    if (root) {
+        printf("\nÁrvore Sintática Abstrata (AST):\n");
+        printAST(root, 0);
+        printf("\n");
+        printTable();
+    }
+    
+    return 0;
 }
 
 void yyerror(const char *s) {

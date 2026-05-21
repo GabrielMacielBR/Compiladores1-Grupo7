@@ -81,7 +81,12 @@ void printAST(NodeAST *root, int level) {
                 break;
             case AST_SEQ:
                 printAST(root->left, level);
-                if (root->left) printf(";\n");
+                // Não adiciona ; para comandos de controle (IF, WHILE, FOR)
+                if (root->left && root->left->type != AST_IF && root->left->type != AST_WHILE && root->left->type != AST_FOR) {
+                    printf(";\n");
+                } else if (root->left) {
+                    printf("\n");
+                }
                 printAST(root->right, level);
                 break;
             case AST_IF:
