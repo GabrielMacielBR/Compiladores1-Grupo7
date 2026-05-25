@@ -57,6 +57,34 @@ NodeAST *createNodeIf(NodeAST *cond, NodeAST *if_body, NodeAST *else_body) {
     return newNode;
 }
 
+NodeAST *createNodeAssign(NodeAST *id, NodeAST *value) {
+    NodeAST *newNode = malloc(sizeof(NodeAST));
+
+    newNode->type = AST_ASSIGN;
+
+    newNode->left = id;
+    newNode->right = value;
+
+    newNode->next = NULL;
+
+    return newNode;
+}
+
+NodeAST *createNodeDecl(char *type, NodeAST *id, NodeAST *value) {
+    NodeAST *newNode = malloc(sizeof(NodeAST));
+
+    newNode->type = AST_DECL;
+
+    strcpy(newNode->op, type);
+
+    newNode->left = id;
+    newNode->right = value;
+
+    newNode->next = NULL;
+
+    return newNode;
+}
+
 void printAST(NodeAST *root, int level) {
     if (root) {
         switch (root->type) {
@@ -90,6 +118,25 @@ void printAST(NodeAST *root, int level) {
                 printf(") { ");
                 printAST(root->right, level); // Body e Else
                 printf(" }");
+                break;
+            case AST_ASSIGN:
+                printf("(ASSIGN ");
+                printAST(root->left, level);
+                printf(" = ");
+                printAST(root->right, level);
+                printf(")");
+                break;
+            case AST_DECL:
+                printf("(DECL %s ", root->op);
+
+                printAST(root->left, level);
+
+                if(root->right != NULL) {
+                    printf(" = ");
+                    printAST(root->right, level);
+                }
+
+                printf(")");
                 break;
             default:
                 printf("Unknown");

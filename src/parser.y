@@ -35,7 +35,7 @@ NodeAST *root = NULL;
 %token WHILE FOR DO
 %token IF ELSE
 
-%type <ast> expr 
+%type <ast> expr declaration assignment
 
 /* Regras de precedencia e associatividade */
 %left OR
@@ -67,14 +67,30 @@ input:
     ;
 
 statement:
-  //  declaration SEMICOLON
-  //| assignment SEMICOLON
+    declaration SEMICOLON
+    {
+        root = $1;
+
+        printf("\nAST:\n");
+        printAST(root, 0);
+        printf("\n");
+
+        printTable();
+    }
+  | assignment SEMICOLON
+    {
+        root = $1;
+
+        printf("\nAST:\n");
+        printAST(root, 0);
+        printf("\n");
+    }
   |   expr SEMICOLON {
-    root = $1;
-    printf("\nÁrvore Sintática Abstrata (AST):\n");
-    printAST(root, 0);
-    printf("\n");
-    printTable();
+        root = $1;
+
+        printf("\nAST:\n");
+        printAST(root, 0);
+        printf("\n");
   }
   //| loop
   //| conditional
@@ -89,20 +105,76 @@ statements:
 
 /* Regra para: int x; */
 declaration:
-    INT IDENT    { printf("INFO: Declaração de variável detectada: %s\n", $2); }
-  | FLOAT IDENT  { printf("INFO: Declaração de variável float detectada: %s\n", $2); }
-  | INT IDENT ASSIGN expr { printf("INFO: Declaração de variável com inicialização detectada: %s = %d\n", $2, $4); }
-  | FLOAT IDENT ASSIGN expr { printf("INFO: Declaração de variável float com inicialização detectada: %s = %d\n", $2, $4); }
-  ;
+    INT IDENT    {
+        insertSymbol($2, "int");
+
+        $$ = createNodeDecl(
+            "int",
+            createNodeId($2),
+            NULL
+        );
+    }
+  | FLOAT IDENT
+    {
+        insertSymbol($2, "float");
+        $$ = createNodeDecl(
+            "float",
+            createNodeId($2),
+            NULL
+        );
+    }
+  | INT IDENT ASSIGN expr
+    {
+        insertSymbol($2, "int");
+        $$ = createNodeDecl(
+            "int",
+            createNodeId($2),
+            $4
+        );
+    }
+  | FLOAT IDENT ASSIGN expr
+    {
+        insertSymbol($2, "float");
+        $$ = createNodeDecl(
+            "float",
+            createNodeId($2),
+            $4
+        );
+    }
+;
 
 /* Regra para: x = 10 + 2; */
 assignment:
-    IDENT ASSIGN expr { printf("SUCESSO: Atribuição realizada. Resultado da expressão: %d\n", $3); }
-  | IDENT INCREMENT   { printf("INFO: incremento posfixado detectado para %s\n", $1); }
-  | IDENT DECREMENT   { printf("INFO: decremento posfixado detectado para %s\n", $1); }
-  | INCREMENT IDENT   { printf("INFO: incremento prefixado detectado para %s\n", $2); }
-  | DECREMENT IDENT   { printf("INFO: decremento prefixado detectado para %s\n", $2); }
-  ;
+    IDENT ASSIGN expr
+    {
+        $$ = createNodeAssign(
+            createNodeId($1),
+            $3
+        );
+    }
+  | IDENT INCREMENT
+    {
+        $$ = createNodeAssign(
+            createNodeId($1),
+            createNodeBinOp(
+                "+",
+                createNodeId($1),
+                createNodeNum(1)
+            )
+        );
+    }
+  | IDENT DECREMENT
+    {
+        $$ = createNodeAssign(
+            createNodeId($1),
+            createNodeBinOp(
+                "-",
+                createNodeId($1),
+                createNodeNum(1)
+            )
+        );
+    }
+;
 
 /* Hierarquia de expressões com precedência:
    lógica -> comparação -> aritmética -> unária -> primária */
@@ -123,6 +195,7 @@ expr:
   | MINUS expr %prec NOT { $$ = createNodeUnOp("-", $2);       }
   | LPAREN expr RPAREN   { $$ = $2;                            }
   | NUM                  { $$ = createNodeNum($1);             }
+  | IDENT                { $$ = createNodeId($1);}
   ;
 
 
