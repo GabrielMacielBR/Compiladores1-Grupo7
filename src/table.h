@@ -7,6 +7,9 @@ typedef struct symbol {
     struct symbol *next;
 } Symbol;
 
+/* API para tabela de símbolos (implementação como tabela hash) */
+void initTable();
+void freeTable();
 void insertSymbol(char *name, char *type);
 Symbol *searchSymbol(char *name);
 void printTable();

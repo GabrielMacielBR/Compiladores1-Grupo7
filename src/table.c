@@ -2,40 +2,66 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+/* Tabela hash simples para símbolos */
 
-Symbol *table = NULL;
+#define TABLE_SIZE 211
 
-void insertSymbol(char *name, char *type) {
-    // Verifica se o símbolo já foi inserido
-    Symbol *s = table;
-    while (s) {
-        if (strcmp(s->name, name) == 0)
-            return;
-        s = s->next;
-    }
-    Symbol *new = malloc(sizeof(Symbol));
-    strcpy(new->name, name);
-    strcpy(new->type, type);
-    new->next = NULL;
-    if (table == NULL) {
-        table = new;
-    } else {
-        Symbol *last = table;
-        while (last->next)
-            last = last->next;
-        last->next = new;
+static Symbol *table[TABLE_SIZE];
+
+static unsigned long hash(const char *str) {
+    unsigned long hash = 5381;
+    int c;
+    while ((c = *str++))
+        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+    return hash;
+}
+
+void initTable() {
+    for (int i = 0; i < TABLE_SIZE; ++i)
+        table[i] = NULL;
+}
+
+void freeTable() {
+    for (int i = 0; i < TABLE_SIZE; ++i) {
+        Symbol *s = table[i];
+        while (s) {
+            Symbol *next = s->next;
+            free(s);
+            s = next;
+        }
+        table[i] = NULL;
     }
 }
 
+void insertSymbol(char *name, char *type) {
+    unsigned long h = hash(name) % TABLE_SIZE;
+    /* checa se já existe no bucket */
+    for (Symbol *s = table[h]; s; s = s->next) {
+        if (strcmp(s->name, name) == 0)
+            return;
+    }
+    Symbol *new = malloc(sizeof(Symbol));
+    if (!new) return;
+    strncpy(new->name, name, sizeof(new->name)-1);
+    new->name[sizeof(new->name)-1] = '\0';
+    strncpy(new->type, type, sizeof(new->type)-1);
+    new->type[sizeof(new->type)-1] = '\0';
+    new->next = table[h];
+    table[h] = new;
+}
+
 Symbol *searchSymbol(char *name) {
-    for (Symbol *s = table; s; s = s->next)
+    unsigned long h = hash(name) % TABLE_SIZE;
+    for (Symbol *s = table[h]; s; s = s->next)
         if (strcmp(s->name, name) == 0)
             return s;
     return NULL;
 }
 
 void printTable() {
-    printf("\nTabela de Símbolos:\n");
-    for (Symbol *s = table; s; s = s->next)
-        printf("Nome: %s, Tipo: %s\n", s->name, s->type);
+    printf("\nTabela de Símbolos (hash):\n");
+    for (int i = 0; i < TABLE_SIZE; ++i) {
+        for (Symbol *s = table[i]; s; s = s->next)
+            printf("Bucket %d -> Nome: %s, Tipo: %s\n", i, s->name, s->type);
+    }
 }
