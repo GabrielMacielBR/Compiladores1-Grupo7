@@ -84,14 +84,9 @@ statement:
         printf("\nAST:\n");
         printAST(root, 0);
         printf("\n");
-    }
-  |   expr SEMICOLON {
-        root = $1;
 
-        printf("\nAST:\n");
-        printAST(root, 0);
-        printf("\n");
-  }
+        printTable();
+    }
   //| loop
   //| conditional
   //| RETURN expr SEMICOLON { printf("INFO: return com valor %d\n", $2); }
@@ -106,40 +101,56 @@ statements:
 /* Regra para: int x; */
 declaration:
     INT IDENT    {
-        insertSymbol($2, "int");
+    if (searchSymbol($2)) {
+      fprintf(stderr, "Aviso semântico: símbolo já declarado: %s\n", $2);
+    } else {
+      insertSymbol($2, "int");
+    }
 
-        $$ = createNodeDecl(
-            "int",
-            createNodeId($2),
-            NULL
-        );
+    $$ = createNodeDecl(
+      "int",
+      createNodeId($2),
+      NULL
+    );
     }
   | FLOAT IDENT
     {
-        insertSymbol($2, "float");
-        $$ = createNodeDecl(
-            "float",
-            createNodeId($2),
-            NULL
-        );
+    if (searchSymbol($2)) {
+      fprintf(stderr, "Aviso semântico: símbolo já declarado: %s\n", $2);
+    } else {
+      insertSymbol($2, "float");
+    }
+    $$ = createNodeDecl(
+      "float",
+      createNodeId($2),
+      NULL
+    );
     }
   | INT IDENT ASSIGN expr
     {
-        insertSymbol($2, "int");
-        $$ = createNodeDecl(
-            "int",
-            createNodeId($2),
-            $4
-        );
+    if (searchSymbol($2)) {
+      fprintf(stderr, "Aviso semântico: símbolo já declarado: %s\n", $2);
+    } else {
+      insertSymbol($2, "int");
+    }
+    $$ = createNodeDecl(
+      "int",
+      createNodeId($2),
+      $4
+    );
     }
   | FLOAT IDENT ASSIGN expr
     {
-        insertSymbol($2, "float");
-        $$ = createNodeDecl(
-            "float",
-            createNodeId($2),
-            $4
-        );
+    if (searchSymbol($2)) {
+      fprintf(stderr, "Aviso semântico: símbolo já declarado: %s\n", $2);
+    } else {
+      insertSymbol($2, "float");
+    }
+    $$ = createNodeDecl(
+      "float",
+      createNodeId($2),
+      $4
+    );
     }
 ;
 
@@ -147,32 +158,53 @@ declaration:
 assignment:
     IDENT ASSIGN expr
     {
+      if (!searchSymbol($1)) {
+        char _msg[128];
+        snprintf(_msg, sizeof(_msg), "Erro semântico: atribuição a símbolo não declarado: %s", $1);
+        yyerror(_msg);
+        YYABORT;
+      } else {
         $$ = createNodeAssign(
-            createNodeId($1),
-            $3
+          createNodeId($1),
+          $3
         );
+      }
     }
   | IDENT INCREMENT
     {
+      if (!searchSymbol($1)) {
+        char _msg[128];
+        snprintf(_msg, sizeof(_msg), "Erro semântico: incremento em símbolo não declarado: %s", $1);
+        yyerror(_msg);
+        YYABORT;
+      } else {
         $$ = createNodeAssign(
+          createNodeId($1),
+          createNodeBinOp(
+            "+",
             createNodeId($1),
-            createNodeBinOp(
-                "+",
-                createNodeId($1),
-                createNodeNum(1)
-            )
+            createNodeNum(1)
+          )
         );
+      }
     }
   | IDENT DECREMENT
     {
+      if (!searchSymbol($1)) {
+        char _msg[128];
+        snprintf(_msg, sizeof(_msg), "Erro semântico: decremento em símbolo não declarado: %s", $1);
+        yyerror(_msg);
+        YYABORT;
+      } else {
         $$ = createNodeAssign(
+          createNodeId($1),
+          createNodeBinOp(
+            "-",
             createNodeId($1),
-            createNodeBinOp(
-                "-",
-                createNodeId($1),
-                createNodeNum(1)
-            )
+            createNodeNum(1)
+          )
         );
+      }
     }
 ;
 
