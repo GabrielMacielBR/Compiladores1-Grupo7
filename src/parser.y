@@ -195,7 +195,11 @@ expr:
   | MINUS expr %prec NOT { $$ = createNodeUnOp("-", $2);       }
   | LPAREN expr RPAREN   { $$ = $2;                            }
   | NUM                  { $$ = createNodeNum($1);             }
-  | IDENT                { $$ = createNodeId($1);}
+  | IDENT                { 
+                       if (!searchSymbol($1))
+                           fprintf(stderr, "Aviso semântico: símbolo não declarado: %s\n", $1);
+                       $$ = createNodeId($1);
+                     }
   ;
 
 
@@ -272,7 +276,10 @@ arg_list:
 
 int main(void) {
     printf("Digite expressoes terminadas com ';'. Pressione Ctrl+D para encerrar.\n");
-    return yyparse();
+      initTable();
+      int ret = yyparse();
+      freeTable();
+      return ret;
 }
 
 void yyerror(const char *s) {
