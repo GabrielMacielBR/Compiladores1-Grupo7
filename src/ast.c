@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "table.h"
 
 
 NodeAST *createNode(NodeType type) {
@@ -9,6 +10,7 @@ NodeAST *createNode(NodeType type) {
     
     newNode->type = type;
     newNode->child_count = 0;
+    memset(newNode->dataType, 0, sizeof(newNode->dataType));
 
     for (int i = 0; i < MAX_CHILDREN; i++) {
         newNode->children[i] = NULL;
@@ -19,12 +21,15 @@ NodeAST *createNode(NodeType type) {
 NodeAST *createNodeNum(int value) {
     NodeAST *newNode = createNode(AST_NUM);
     newNode->value = value;
+    strcpy(newNode->dataType, "int");
     return newNode;
 }
 
 NodeAST *createNodeId(char *name) {
     NodeAST *newNode = createNode(AST_ID);
     strcpy(newNode->name, name);
+    const char *t = getSymbolType(name);
+    if (t) strcpy(newNode->dataType, t);
     return newNode;
 }
 
@@ -35,6 +40,13 @@ NodeAST *createNodeBinOp(char* op, NodeAST *left, NodeAST *right) {
     addChild(newNode, left);
     addChild(newNode, right);
 
+    if (left && right) {
+        if (strcmp(left->dataType, "float") == 0 || strcmp(right->dataType, "float") == 0) {
+            strcpy(newNode->dataType, "float");
+        } else {
+            strcpy(newNode->dataType, "int");
+        }
+    }
     return newNode;
 }
 
@@ -43,6 +55,10 @@ NodeAST *createNodeUnOp(char* op, NodeAST *left) {
     strcpy(newNode->op, op);
 
     addChild(newNode, left);
+    
+    if (left) {
+        strcpy(newNode->dataType, left->dataType);
+    }
 
     return newNode;
 }
@@ -241,3 +257,4 @@ void printAST(NodeAST *root, int level) {
             break;
     }
 }
+

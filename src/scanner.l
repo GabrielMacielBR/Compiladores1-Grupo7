@@ -3,6 +3,19 @@
 #include <stdlib.h>
 #include <string.h>
 #include "parser.tab.h"  /* contém definições geradas pelo Bison (NUM, PLUS, etc.) */
+
+int yyline = 1;
+int yycolumn = 1;
+
+#define YY_USER_ACTION \
+    for (int i = 0; yytext[i] != '\0'; i++) { \
+        if (yytext[i] == '\n') { \
+            yyline++; \
+            yycolumn = 1; \
+        } else { \
+            yycolumn++; \
+        } \
+    }
 %}
 
 /* Definições de padrões de token e ações */

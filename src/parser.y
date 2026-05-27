@@ -5,6 +5,9 @@
 #include "ast.h"
 #include "table.h"
 
+extern int yyline;
+extern int yycolumn;
+
 /* Prototipos para evitar avisos de funcao implicita */
 int yylex(void);
 void yyerror(const char *s);
@@ -29,12 +32,13 @@ NodeAST *root = NULL;
 %token INT FLOAT FUNC RETURN
 %token <id> IDENT
 %token ASSIGN SEMICOLON COMMA
+%token COLON QUESTION
 %token PLUS MINUS TIMES DIVIDE LPAREN RPAREN LBRACE RBRACE
 %token EQ NEQ LT GT LEQ GEQ AND OR NOT INCREMENT DECREMENT
 %token WHILE FOR DO
 %token IF ELSE
 
-%type <ast> expr declaration assignment input statement conditional statements block body loop init_for cond_for step_for
+%type <ast> expr declaration assignment statement statements loop conditional body block init_for cond_for step_for
 
 /* Regras de precedencia e associatividade */
 %left OR
@@ -55,128 +59,187 @@ NodeAST *root = NULL;
 
 /* Regras da gramatica */
 input:
-    /* vazio */
-      {
-        $$ = NULL;
-        root = NULL;
-      }
-  | input statement
-      {
-        if ($1 == NULL) {
-          $$ = $2;
-          root = $2;
-        } else {
-          $$ = createNodeSeq($1, $2);
-          root = $$;
+        /* vazio */
+    | input statement
+    {
+        root = $2;
+        if (root) {
+            printf("\nAST:\n");
+            printAST(root, 0);
+            printf("\n");
+            printTable();
         }
-
-        printf("\nAST:\n");
-        printAST($2, 0);
-        printf("\n");
-
-        printTable();
-        printf("\n");
-      }
+    }
     //| input function_definition
-  | input error SEMICOLON
-      { 
-        fprintf(stderr, "[ERRO SINTATICO] Erro recuperado ate ';'\n");
-        yyerrok; /* reset de erro */
-        yyclearin; /* limpamos o token de lookahead */
-      }
-  ;
+    | input error SEMICOLON { 
+      fprintf(stderr, "[ERRO SINTATICO] Erro recuperado ate ';'\n");
+      yyerrok; /* reset de erro */
+      yyclearin; /* limpamos o token de lookahead */
+    }
+    ;
 
 statement:
-    declaration SEMICOLON
-      {
-        $$ = $1;
-        root = $1;
-      }
-  | assignment SEMICOLON
-      {
-        root = $1;
-      }
-  | expr SEMICOLON
-      {
-        $$ = $1;
-        root = $1;
-      }
-  | loop
-      {
-        $$ = $1;
-      }
-  | conditional
-      {
-        $$ = $1;
-      }
+    declaration SEMICOLON { $$ = $1; }
+  | assignment SEMICOLON { $$ = $1; }
+  | loop { $$ = $1; }
+  | conditional { $$ = $1; }
   //| RETURN expr SEMICOLON { printf("INFO: return com valor %d\n", $2); }
   //| RETURN SEMICOLON { printf("INFO: return sem valor\n"); }
   ;
 
 statements:
       /* vazio */ { $$ = NULL; }
-  | statements statement
-      { 
-        if ($1 == NULL) {
-          $$ = $2;
-        } else {
-          $$ = createNodeSeq($1, $2);
-        }
-      }
-  ;
+    | statements statement { $$ = createNodeSeq($1, $2); }
+    ;
 
 /* Regra para: int x; */
 declaration:
-    INT IDENT 
-      {
-        insertSymbol($2, "int");
+    INT IDENT
+    {
+      if (searchSymbolInCurrentScope($2)) {
+        if (checkTypeConflict($2, "int")) {
+          char _msg[128];
+          snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: redeclaração com tipo diferente: %s", yyline, yycolumn - (int)strlen($2), $2);
+          yyerror(_msg);
+          YYABORT;
+        } else {
+          fprintf(stderr, "Aviso semântico [L%d:C%d]: símbolo já declarado: %s\n", yyline, yycolumn - (int)strlen($2), $2);
+        }
+      } else {
+        insertSymbol($2, "int", yyline, yycolumn - (int)strlen($2));
+      }
 
-        $$ = createNodeDecl(
-          "int",
-          createNodeId($2),
-          NULL
-        );
-     }
+      $$ = createNodeDecl(
+        "int",
+        createNodeId($2),
+        NULL
+      );
+    }
   | FLOAT IDENT
-      {
-        insertSymbol($2, "float");
-        $$ = createNodeDecl(
-          "float",
-          createNodeId($2),
-          NULL
-        );
+    {
+      if (searchSymbolInCurrentScope($2)) {
+        if (checkTypeConflict($2, "float")) {
+          char _msg[128];
+          snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: redeclaração com tipo diferente: %s", yyline, yycolumn - (int)strlen($2), $2);
+          yyerror(_msg);
+          YYABORT;
+        } else {
+          fprintf(stderr, "Aviso semântico [L%d:C%d]: símbolo já declarado: %s\n", yyline, yycolumn - (int)strlen($2), $2);
+        }
+      } else {
+        insertSymbol($2, "float", yyline, yycolumn - (int)strlen($2));
       }
+
+      $$ = createNodeDecl(
+        "float",
+        createNodeId($2),
+        NULL
+      );
+    }
   | INT IDENT ASSIGN expr
-      {
-        insertSymbol($2, "int");
-        $$ = createNodeDecl(
-          "int",
-          createNodeId($2),
-          $4
-        );
+    {
+      if (searchSymbolInCurrentScope($2)) {
+        if (checkTypeConflict($2, "int")) {
+          char _msg[128];
+          snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: redeclaração com tipo diferente: %s", yyline, yycolumn - (int)strlen($2), $2);
+          yyerror(_msg);
+          YYABORT;
+        } else {
+          fprintf(stderr, "Aviso semântico [L%d:C%d]: símbolo já declarado: %s\n", yyline, yycolumn - (int)strlen($2), $2);
+        }
+      } else {
+        insertSymbol($2, "int", yyline, yycolumn - (int)strlen($2));
       }
+      /* checar compatibilidade de tipos entre declaração e expressão atribuída (Bottom-up AST) */
+      {
+        const char *rhsType = $4->dataType;
+        if (rhsType && strlen(rhsType) > 0 && strcmp(rhsType, "int") != 0) {
+          char _msg[128];
+          snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: atribuição com tipo incompatível na declaração: %s", yyline, yycolumn - (int)strlen($2), $2);
+          yyerror(_msg);
+          YYABORT;
+        }
+      }
+      $$ = createNodeDecl(
+        "int",
+        createNodeId($2),
+        $4
+      );
+    }
   | FLOAT IDENT ASSIGN expr
-      {
-        insertSymbol($2, "float");
-        $$ = createNodeDecl(
-          "float",
-          createNodeId($2),
-          $4
-        );
+    {
+      if (searchSymbolInCurrentScope($2)) {
+        if (checkTypeConflict($2, "float")) {
+          char _msg[128];
+          snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: redeclaração com tipo diferente: %s", yyline, yycolumn - (int)strlen($2), $2);
+          yyerror(_msg);
+          YYABORT;
+        } else {
+          fprintf(stderr, "Aviso semântico [L%d:C%d]: símbolo já declarado: %s\n", yyline, yycolumn - (int)strlen($2), $2);
+        }
+      } else {
+        insertSymbol($2, "float", yyline, yycolumn - (int)strlen($2));
       }
-  ;
+      /* checar compatibilidade de tipos entre declaração e expressão atribuída (Bottom-up AST) */
+      {
+        const char *rhsType = $4->dataType;
+        if (rhsType && strlen(rhsType) > 0 && strcmp(rhsType, "float") != 0) {
+          char _msg[128];
+          snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: atribuição com tipo incompatível na declaração: %s", yyline, yycolumn - (int)strlen($2), $2);
+          yyerror(_msg);
+          YYABORT;
+        }
+      }
+      $$ = createNodeDecl(
+        "float",
+        createNodeId($2),
+        $4
+      );
+    }
+;
 
 /* Regra para: x = 10 + 2; */
 assignment:
     IDENT ASSIGN expr
-      {
+    {
+      if (!searchSymbol($1)) {
+        char _msg[128];
+        snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: atribuição a símbolo não declarado: %s", yyline, yycolumn - (int)strlen($1), $1);
+        yyerror(_msg);
+        YYABORT;
+      } else {
+        /* checar compatibilidade de tipos entre LHS e RHS (Bottom-up AST) */
+        {
+          const char *lhsType = getSymbolType($1);
+          const char *rhsType = $3->dataType;
+          if (rhsType && strlen(rhsType) > 0 && lhsType && strcmp(lhsType, rhsType) != 0) {
+            char _msg[128];
+            snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: incompatibilidade de tipos na atribuição: %s", yyline, yycolumn - (int)strlen($1), $1);
+            yyerror(_msg);
+            YYABORT;
+          }
+        }
         $$ = createNodeAssign(
           createNodeId($1),
           $3
         );
       }
+    }
   | IDENT INCREMENT
-      {
+    {
+      if (!searchSymbol($1)) {
+        char _msg[128];
+        snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: incremento em símbolo não declarado: %s", yyline, yycolumn - (int)strlen($1) - 2, $1);
+        yyerror(_msg);
+        YYABORT;
+      } else {
+        const char *t = getSymbolType($1);
+        if (!t || strcmp(t, "int") != 0) {
+          char _msg[128];
+          snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: incremento apenas permitido para int: %s", yyline, yycolumn - (int)strlen($1) - 2, $1);
+          yyerror(_msg);
+          YYABORT;
+        }
         $$ = createNodeAssign(
           createNodeId($1),
           createNodeBinOp(
@@ -186,208 +249,199 @@ assignment:
           )
         );
       }
+    }
   | IDENT DECREMENT
-      {
+    {
+      if (!searchSymbol($1)) {
+        char _msg[128];
+        snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: decremento em símbolo não declarado: %s", yyline, yycolumn - (int)strlen($1) - 2, $1);
+        yyerror(_msg);
+        YYABORT;
+      } else {
+        const char *t = getSymbolType($1);
+        if (!t || strcmp(t, "int") != 0) {
+          char _msg[128];
+          snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: decremento apenas permitido para int: %s", yyline, yycolumn - (int)strlen($1) - 2, $1);
+          yyerror(_msg);
+          YYABORT;
+        }
         $$ = createNodeAssign(
+          createNodeId($1),
+          createNodeBinOp(
+            "-",
             createNodeId($1),
-            createNodeBinOp(
-              "-",
-              createNodeId($1),
-              createNodeNum(1)
-            )
+            createNodeNum(1)
+          )
         );
       }
-  ;
+    }
+;
 
 /* Hierarquia de expressões com precedência:
    lógica -> comparação -> aritmética -> unária -> primária */
 expr:
-    expr OR expr
-      {
+    expr OR expr {
         $$ = createNodeBinOp("||", $1, $3);
-      }
-  | expr AND expr
-      {
-        $$ = createNodeBinOp("&&", $1, $3);
-      }
-  | expr EQ expr
-      {
+    }
+  | expr AND expr {
+        $$ = createNodeBinOp("&&", $1, $3); 
+    }
+  | expr EQ expr {
         $$ = createNodeBinOp("==", $1, $3);
-      }
-  | expr NEQ expr        
-      {
+    }
+  | expr NEQ expr {
         $$ = createNodeBinOp("!=", $1, $3);
-      }
-  | expr LT expr         
-      {
+    }
+  | expr LT expr {
         $$ = createNodeBinOp("<", $1, $3);
-      }
-  | expr LEQ expr 
-      {
+    }
+  | expr LEQ expr {
         $$ = createNodeBinOp("<=", $1, $3);
-      }
-  | expr GT expr 
-      {
+    }
+  | expr GT expr {
         $$ = createNodeBinOp(">", $1, $3);
-      }
-  | expr GEQ expr 
-      {
+    }
+  | expr GEQ expr {
         $$ = createNodeBinOp(">=", $1, $3);
-      }
-  | expr PLUS expr
-      {
+    }
+  | expr PLUS expr {
         $$ = createNodeBinOp("+", $1, $3);
-      }
-  | expr MINUS expr      {
+    }
+  | expr MINUS expr {
         $$ = createNodeBinOp("-", $1, $3);
-      }
-  | expr TIMES expr      {
+    }
+  | expr TIMES expr {
         $$ = createNodeBinOp("*", $1, $3);
-      }
-  | expr DIVIDE expr     {
+    }
+  | expr DIVIDE expr {
         $$ = createNodeBinOp("/", $1, $3);
-      }
-  | NOT expr             {
+    }
+  | NOT expr {
         $$ = createNodeUnOp("!", $2);
-      }
+    }
   | MINUS expr %prec NOT {
         $$ = createNodeUnOp("-", $2);
-      }
-  | LPAREN expr RPAREN
-      {
-        $$ = $2;          
-      }
-  | NUM
-      {
+    }
+  | LPAREN expr RPAREN {
+        $$ = $2;
+    }
+  | NUM {
         $$ = createNodeNum($1);
-      }
-  | IDENT 
-      {
+    }
+  | IDENT { 
+        if (!searchSymbol($1))
+            fprintf(stderr, "Aviso semântico [L%d:C%d]: símbolo não declarado: %s\n", yyline, yycolumn - (int)strlen($1), $1);
         $$ = createNodeId($1);
-      }
+    }
   ;
 
-block:
-    LBRACE statements RBRACE
-      {
-        $$ = $2;
-      }
-  ;
+
+block: 
+    LBRACE { pushScope(); } statements RBRACE {
+        $$ = $3;
+        popScope();
+        printf("INFO: Bloco de codigo detectado\n");
+    }
+    ;
 
 /* Laços WHILE e FOR e DO...WHILE */
 
 init_for:
-    declaration
-      {
-        $$ = $1;
-      }
-  | assignment
-      {
-        $$ = $1;
-      }
-  | /* vazio */
-      {
-        $$ = NULL;
-      }
-  ;
+      declaration { $$ = $1; }
+    | assignment { $$ = $1; }
+    | /* vazio */ { $$ = NULL; }
+    ;
 
 cond_for:
-    expr
-      {
-        $$ = $1;
-      }
-  | /* vazio */
-      {
-        $$ = NULL;
-      }
-  ;
+    expr { $$ = $1; }
+    | /* vazio */ { $$ = NULL; }
+    ;
 
 step_for:
-    assignment
-      {
-        $$ = $1;
-      }
-  | /* vazio */
-      {
-        $$ = NULL;
-      }
-  ;
+      assignment { $$ = $1; }
+    | /* vazio */ { $$ = NULL; }
+    ;
 
 body:
-    statement
-  | block
-  ;
+      statement { $$ = $1; }
+    | block { $$ = $1; }
+    ;
 
-loop: 
-    FOR LPAREN init_for SEMICOLON cond_for SEMICOLON step_for RPAREN body
-      {
-        $$ = createNodeFor($3, $5, $7, $9);
+loop:
+      WHILE LPAREN expr RPAREN body {
+          $$ = createNodeWhile($3, $5);
+          printf("INFO: Laço WHILE detectado\n");
       }
-  | WHILE LPAREN expr RPAREN body
-      {
-        $$ = createNodeWhile($3, $5);
+    | FOR LPAREN { pushScope(); } init_for SEMICOLON cond_for SEMICOLON step_for RPAREN body {
+          $$ = createNodeFor($4, $6, $8, $10);
+          popScope();
+          printf("INFO: Laço FOR detectado\n");
       }
-  | DO body WHILE LPAREN expr RPAREN SEMICOLON
-      {
-        $$ = createNodeDoWhile($2, $5);
+    | DO body WHILE LPAREN expr RPAREN SEMICOLON {
+          $$ = createNodeDoWhile($2, $5);
+          printf("INFO: Laço DO...WHILE detectado\n");
       }
-  ;
+    ;
 
 /* Condicionais if-else (resolvem dangling-else) */
 conditional:
-    IF LPAREN expr RPAREN body %prec LOWER_THAN_ELSE
-      {
-        $$ = createNodeIf($3, $5, NULL);
+      IF LPAREN expr RPAREN body %prec LOWER_THAN_ELSE {
+          $$ = createNodeIf($3, $5, NULL);
+          printf("SUCESSO: Declaração if realizada.\n");
       }
-  | IF LPAREN expr RPAREN body ELSE body
-      {
-        $$ = createNodeIf($3, $5, $7);
+    | IF LPAREN expr RPAREN body ELSE body {
+          $$ = createNodeIf($3, $5, $7);
+          printf("SUCESSO: Declaração if-else realizada.\n");
       }
-  ;
+    | expr QUESTION body COLON body {
+          $$ = createNodeIf($1, $3, $5);
+          printf("SUCESSO: Declaração condicional com operador ternário realizada.\n");
+      }
+    ;
     
 /* Funções: definição, parâmetros e lista de argumentos */
 function_definition:
-    FUNC INT IDENT LPAREN parameter_list_opt RPAREN block
-      {
-        printf("INFO: Função definida: %s\n", $3);
-      }
-  ;
+  FUNC INT IDENT LPAREN parameter_list_opt RPAREN block { printf("INFO: Função definida: %s\n", $3); }
+    ;
 
 parameter_list_opt:
-    /* vazio */
-  | parameter_list
-  ;
+      /* vazio */
+    | parameter_list
+    ;
 
 parameter_list:
-    parameter
-  | parameter_list COMMA parameter
-  ;
+      parameter
+    | parameter_list COMMA parameter
+    ;
 
 parameter:
-    INT IDENT
-      {
-        printf("INFO: Parametro: %s\n", $2);
-      }
-  ;
+      INT IDENT { printf("INFO: Parametro: %s\n", $2); }
+    ;
 
 arg_list_opt:
-    /* vazio */
-  | arg_list
-  ;
+      /* vazio */
+    | arg_list
+    ;
 
 arg_list:
-    expr
-  | arg_list COMMA expr
-  ;
+      expr
+    | arg_list COMMA expr
+    ;
 
 %%
 
 int main(void) {
-  printf("Digite expressoes terminadas com ';'. Pressione Ctrl+D para encerrar.\n");
-  yyparse();
-  return 0;
+    printf("Digite expressoes terminadas com ';'. Pressione Ctrl+D para encerrar.\n");
+      initTable();
+      int ret = yyparse();
+      freeTable();
+      return ret;
 }
 
 void yyerror(const char *s) {
-  fprintf(stderr, "Erro sintático: %s\n", s);
+    if (strncmp(s, "Erro semântico", 14) == 0) {
+        fprintf(stderr, "%s\n", s);
+    } else {
+        fprintf(stderr, "Erro sintático [L%d:C%d]: %s\n", yyline, yycolumn, s);
+    }
 }

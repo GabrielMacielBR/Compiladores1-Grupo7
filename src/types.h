@@ -26,7 +26,8 @@ typedef struct NodeAST {
     char op[3];        // ex: "+", "==", "++"
     int value;         // Para AST_NUM
     char name[32];     // Para AST_ID e nome de funções
-    
+    char dataType[16]; // Synthesis bottom-up type: "int", "float", etc
+
     struct NodeAST *children[MAX_CHILDREN];
     int child_count;
 } NodeAST;
