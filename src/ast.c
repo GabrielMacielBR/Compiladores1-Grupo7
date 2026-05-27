@@ -10,6 +10,7 @@ NodeAST *createNode(NodeType type) {
     
     newNode->type = type;
     newNode->child_count = 0;
+    memset(newNode->dataType, 0, sizeof(newNode->dataType));
 
     for (int i = 0; i < MAX_CHILDREN; i++) {
         newNode->children[i] = NULL;
@@ -20,12 +21,15 @@ NodeAST *createNode(NodeType type) {
 NodeAST *createNodeNum(int value) {
     NodeAST *newNode = createNode(AST_NUM);
     newNode->value = value;
+    strcpy(newNode->dataType, "int");
     return newNode;
 }
 
 NodeAST *createNodeId(char *name) {
     NodeAST *newNode = createNode(AST_ID);
     strcpy(newNode->name, name);
+    const char *t = getSymbolType(name);
+    if (t) strcpy(newNode->dataType, t);
     return newNode;
 }
 
@@ -36,6 +40,13 @@ NodeAST *createNodeBinOp(char* op, NodeAST *left, NodeAST *right) {
     addChild(newNode, left);
     addChild(newNode, right);
 
+    if (left && right) {
+        if (strcmp(left->dataType, "float") == 0 || strcmp(right->dataType, "float") == 0) {
+            strcpy(newNode->dataType, "float");
+        } else {
+            strcpy(newNode->dataType, "int");
+        }
+    }
     return newNode;
 }
 
@@ -44,6 +55,10 @@ NodeAST *createNodeUnOp(char* op, NodeAST *left) {
     strcpy(newNode->op, op);
 
     addChild(newNode, left);
+    
+    if (left) {
+        strcpy(newNode->dataType, left->dataType);
+    }
 
     return newNode;
 }
@@ -243,30 +258,3 @@ void printAST(NodeAST *root, int level) {
     }
 }
 
-const char *inferType(NodeAST *node) {
-    if (!node) return NULL;
-    switch (node->type) {
-        case AST_NUM:
-            return "int";
-        case AST_ID: {
-            const char *t = getSymbolType(node->name);
-            return t; /* may be NULL */
-        }
-        case AST_BINOP: {
-            const char *lt = inferType(node->children[0]);
-            const char *rt = inferType(node->children[1]);
-            if (!lt || !rt) return NULL;
-            if (strcmp(lt, "float") == 0 || strcmp(rt, "float") == 0) return "float";
-            return "int";
-        }
-        case AST_UNOP: {
-            return inferType(node->children[0]);
-        }
-        case AST_ASSIGN:
-            return inferType(node->children[1]);
-        case AST_DECL:
-            return node->op[0] ? node->op : NULL;
-        default:
-            return NULL;
-    }
-}

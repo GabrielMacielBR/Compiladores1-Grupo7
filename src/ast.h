@@ -23,7 +23,4 @@ void addChild(NodeAST *parent, NodeAST *child);
 
 void printAST(NodeAST *root, int level);
 
-/* Infere tipo de uma expressão AST: retorna "int", "float" ou NULL se indefinido */
-const char *inferType(NodeAST *node);
-
 #endif

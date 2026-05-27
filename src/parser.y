@@ -159,10 +159,10 @@ declaration:
       } else {
         insertSymbol($2, "int", yyline, yycolumn - (int)strlen($2));
       }
-      /* checar compatibilidade de tipos entre declaração e expressão atribuída */
+      /* checar compatibilidade de tipos entre declaração e expressão atribuída (Bottom-up AST) */
       {
-        const char *rhsType = inferType($4);
-        if (rhsType && strcmp(rhsType, "int") != 0) {
+        const char *rhsType = $4->dataType;
+        if (rhsType && strlen(rhsType) > 0 && strcmp(rhsType, "int") != 0) {
           char _msg[128];
           snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: atribuição com tipo incompatível na declaração: %s", yyline, yycolumn - (int)strlen($2), $2);
           yyerror(_msg);
@@ -189,10 +189,10 @@ declaration:
       } else {
         insertSymbol($2, "float", yyline, yycolumn - (int)strlen($2));
       }
-      /* checar compatibilidade de tipos entre declaração e expressão atribuída */
+      /* checar compatibilidade de tipos entre declaração e expressão atribuída (Bottom-up AST) */
       {
-        const char *rhsType = inferType($4);
-        if (rhsType && strcmp(rhsType, "float") != 0) {
+        const char *rhsType = $4->dataType;
+        if (rhsType && strlen(rhsType) > 0 && strcmp(rhsType, "float") != 0) {
           char _msg[128];
           snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: atribuição com tipo incompatível na declaração: %s", yyline, yycolumn - (int)strlen($2), $2);
           yyerror(_msg);
@@ -217,11 +217,11 @@ assignment:
         yyerror(_msg);
         YYABORT;
       } else {
-        /* checar compatibilidade de tipos entre LHS e RHS */
+        /* checar compatibilidade de tipos entre LHS e RHS (Bottom-up AST) */
         {
           const char *lhsType = getSymbolType($1);
-          const char *rhsType = inferType($3);
-          if (rhsType && lhsType && strcmp(lhsType, rhsType) != 0) {
+          const char *rhsType = $3->dataType;
+          if (rhsType && strlen(rhsType) > 0 && lhsType && strcmp(lhsType, rhsType) != 0) {
             char _msg[128];
             snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: incompatibilidade de tipos na atribuição: %s", yyline, yycolumn - (int)strlen($1), $1);
             yyerror(_msg);
