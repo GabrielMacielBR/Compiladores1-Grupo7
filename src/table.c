@@ -33,7 +33,7 @@ void freeTable() {
     }
 }
 
-void insertSymbol(char *name, char *type) {
+void insertSymbol(char *name, char *type, int line, int col) {
     unsigned long h = hash(name) % TABLE_SIZE;
     /* checa se já existe no bucket */
     for (Symbol *s = table[h]; s; s = s->next) {
@@ -46,6 +46,8 @@ void insertSymbol(char *name, char *type) {
     new->name[sizeof(new->name)-1] = '\0';
     strncpy(new->type, type, sizeof(new->type)-1);
     new->type[sizeof(new->type)-1] = '\0';
+    new->line = line;
+    new->column = col;
     new->next = table[h];
     table[h] = new;
 }
@@ -74,6 +76,6 @@ void printTable() {
     printf("\nTabela de Símbolos (hash):\n");
     for (int i = 0; i < TABLE_SIZE; ++i) {
         for (Symbol *s = table[i]; s; s = s->next)
-            printf("Bucket %d -> Nome: %s, Tipo: %s\n", i, s->name, s->type);
+            printf("Nome: %s, Tipo: %s, Decl: L%d:C%d\n", s->name, s->type, s->line, s->column);
     }
 }

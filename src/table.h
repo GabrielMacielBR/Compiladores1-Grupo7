@@ -4,13 +4,15 @@
 typedef struct symbol {
     char name[32];
     char type[16];
+    int line;
+    int column;
     struct symbol *next;
 } Symbol;
 
 /* API para tabela de símbolos (implementação como tabela hash) */
 void initTable();
 void freeTable();
-void insertSymbol(char *name, char *type);
+void insertSymbol(char *name, char *type, int line, int col);
 Symbol *searchSymbol(char *name);
 void printTable();
 /* Retorna 1 se o símbolo existe com tipo diferente de 'type', 0 caso contrário */

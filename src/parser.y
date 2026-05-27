@@ -5,6 +5,9 @@
 #include "ast.h"
 #include "table.h"
 
+extern int yyline;
+extern int yycolumn;
+
 /* Prototipos para evitar avisos de funcao implicita */
 int yylex(void);
 void yyerror(const char *s);
@@ -105,14 +108,14 @@ declaration:
       if (searchSymbol($2)) {
         if (checkTypeConflict($2, "int")) {
           char _msg[128];
-          snprintf(_msg, sizeof(_msg), "Erro semântico: redeclaração com tipo diferente: %s", $2);
+          snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: redeclaração com tipo diferente: %s", yyline, yycolumn - (int)strlen($2), $2);
           yyerror(_msg);
           YYABORT;
         } else {
-          fprintf(stderr, "Aviso semântico: símbolo já declarado: %s\n", $2);
+          fprintf(stderr, "Aviso semântico [L%d:C%d]: símbolo já declarado: %s\n", yyline, yycolumn - (int)strlen($2), $2);
         }
       } else {
-        insertSymbol($2, "int");
+        insertSymbol($2, "int", yyline, yycolumn - (int)strlen($2));
       }
 
       $$ = createNodeDecl(
@@ -126,14 +129,14 @@ declaration:
       if (searchSymbol($2)) {
         if (checkTypeConflict($2, "float")) {
           char _msg[128];
-          snprintf(_msg, sizeof(_msg), "Erro semântico: redeclaração com tipo diferente: %s", $2);
+          snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: redeclaração com tipo diferente: %s", yyline, yycolumn - (int)strlen($2), $2);
           yyerror(_msg);
           YYABORT;
         } else {
-          fprintf(stderr, "Aviso semântico: símbolo já declarado: %s\n", $2);
+          fprintf(stderr, "Aviso semântico [L%d:C%d]: símbolo já declarado: %s\n", yyline, yycolumn - (int)strlen($2), $2);
         }
       } else {
-        insertSymbol($2, "float");
+        insertSymbol($2, "float", yyline, yycolumn - (int)strlen($2));
       }
 
       $$ = createNodeDecl(
@@ -147,21 +150,21 @@ declaration:
       if (searchSymbol($2)) {
         if (checkTypeConflict($2, "int")) {
           char _msg[128];
-          snprintf(_msg, sizeof(_msg), "Erro semântico: redeclaração com tipo diferente: %s", $2);
+          snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: redeclaração com tipo diferente: %s", yyline, yycolumn - (int)strlen($2), $2);
           yyerror(_msg);
           YYABORT;
         } else {
-          fprintf(stderr, "Aviso semântico: símbolo já declarado: %s\n", $2);
+          fprintf(stderr, "Aviso semântico [L%d:C%d]: símbolo já declarado: %s\n", yyline, yycolumn - (int)strlen($2), $2);
         }
       } else {
-        insertSymbol($2, "int");
+        insertSymbol($2, "int", yyline, yycolumn - (int)strlen($2));
       }
       /* checar compatibilidade de tipos entre declaração e expressão atribuída */
       {
         const char *rhsType = inferType($4);
         if (rhsType && strcmp(rhsType, "int") != 0) {
           char _msg[128];
-          snprintf(_msg, sizeof(_msg), "Erro semântico: atribuição com tipo incompatível na declaração: %s", $2);
+          snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: atribuição com tipo incompatível na declaração: %s", yyline, yycolumn - (int)strlen($2), $2);
           yyerror(_msg);
           YYABORT;
         }
@@ -177,21 +180,21 @@ declaration:
       if (searchSymbol($2)) {
         if (checkTypeConflict($2, "float")) {
           char _msg[128];
-          snprintf(_msg, sizeof(_msg), "Erro semântico: redeclaração com tipo diferente: %s", $2);
+          snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: redeclaração com tipo diferente: %s", yyline, yycolumn - (int)strlen($2), $2);
           yyerror(_msg);
           YYABORT;
         } else {
-          fprintf(stderr, "Aviso semântico: símbolo já declarado: %s\n", $2);
+          fprintf(stderr, "Aviso semântico [L%d:C%d]: símbolo já declarado: %s\n", yyline, yycolumn - (int)strlen($2), $2);
         }
       } else {
-        insertSymbol($2, "float");
+        insertSymbol($2, "float", yyline, yycolumn - (int)strlen($2));
       }
       /* checar compatibilidade de tipos entre declaração e expressão atribuída */
       {
         const char *rhsType = inferType($4);
         if (rhsType && strcmp(rhsType, "float") != 0) {
           char _msg[128];
-          snprintf(_msg, sizeof(_msg), "Erro semântico: atribuição com tipo incompatível na declaração: %s", $2);
+          snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: atribuição com tipo incompatível na declaração: %s", yyline, yycolumn - (int)strlen($2), $2);
           yyerror(_msg);
           YYABORT;
         }
@@ -210,7 +213,7 @@ assignment:
     {
       if (!searchSymbol($1)) {
         char _msg[128];
-        snprintf(_msg, sizeof(_msg), "Erro semântico: atribuição a símbolo não declarado: %s", $1);
+        snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: atribuição a símbolo não declarado: %s", yyline, yycolumn - (int)strlen($1), $1);
         yyerror(_msg);
         YYABORT;
       } else {
@@ -220,7 +223,7 @@ assignment:
           const char *rhsType = inferType($3);
           if (rhsType && lhsType && strcmp(lhsType, rhsType) != 0) {
             char _msg[128];
-            snprintf(_msg, sizeof(_msg), "Erro semântico: incompatibilidade de tipos na atribuição: %s", $1);
+            snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: incompatibilidade de tipos na atribuição: %s", yyline, yycolumn - (int)strlen($1), $1);
             yyerror(_msg);
             YYABORT;
           }
@@ -235,14 +238,14 @@ assignment:
     {
       if (!searchSymbol($1)) {
         char _msg[128];
-        snprintf(_msg, sizeof(_msg), "Erro semântico: incremento em símbolo não declarado: %s", $1);
+        snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: incremento em símbolo não declarado: %s", yyline, yycolumn - (int)strlen($1) - 2, $1);
         yyerror(_msg);
         YYABORT;
       } else {
         const char *t = getSymbolType($1);
         if (!t || strcmp(t, "int") != 0) {
           char _msg[128];
-          snprintf(_msg, sizeof(_msg), "Erro semântico: incremento apenas permitido para int: %s", $1);
+          snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: incremento apenas permitido para int: %s", yyline, yycolumn - (int)strlen($1) - 2, $1);
           yyerror(_msg);
           YYABORT;
         }
@@ -260,14 +263,14 @@ assignment:
     {
       if (!searchSymbol($1)) {
         char _msg[128];
-        snprintf(_msg, sizeof(_msg), "Erro semântico: decremento em símbolo não declarado: %s", $1);
+        snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: decremento em símbolo não declarado: %s", yyline, yycolumn - (int)strlen($1) - 2, $1);
         yyerror(_msg);
         YYABORT;
       } else {
         const char *t = getSymbolType($1);
         if (!t || strcmp(t, "int") != 0) {
           char _msg[128];
-          snprintf(_msg, sizeof(_msg), "Erro semântico: decremento apenas permitido para int: %s", $1);
+          snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: decremento apenas permitido para int: %s", yyline, yycolumn - (int)strlen($1) - 2, $1);
           yyerror(_msg);
           YYABORT;
         }
@@ -304,7 +307,7 @@ expr:
   | NUM                  { $$ = createNodeNum($1);             }
   | IDENT                { 
                        if (!searchSymbol($1))
-                           fprintf(stderr, "Aviso semântico: símbolo não declarado: %s\n", $1);
+                           fprintf(stderr, "Aviso semântico [L%d:C%d]: símbolo não declarado: %s\n", yyline, yycolumn - (int)strlen($1), $1);
                        $$ = createNodeId($1);
                      }
   ;
@@ -390,5 +393,9 @@ int main(void) {
 }
 
 void yyerror(const char *s) {
-    fprintf(stderr, "Erro sintático: %s\n", s);
+    if (strncmp(s, "Erro semântico", 14) == 0) {
+        fprintf(stderr, "%s\n", s);
+    } else {
+        fprintf(stderr, "Erro sintático [L%d:C%d]: %s\n", yyline, yycolumn, s);
+    }
 }
