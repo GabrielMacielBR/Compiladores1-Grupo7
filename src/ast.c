@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "table.h"
 
 
 NodeAST *createNode(NodeType type) {
@@ -239,5 +240,33 @@ void printAST(NodeAST *root, int level) {
         default:
             printf("Unknown");
             break;
+    }
+}
+
+const char *inferType(NodeAST *node) {
+    if (!node) return NULL;
+    switch (node->type) {
+        case AST_NUM:
+            return "int";
+        case AST_ID: {
+            const char *t = getSymbolType(node->name);
+            return t; /* may be NULL */
+        }
+        case AST_BINOP: {
+            const char *lt = inferType(node->children[0]);
+            const char *rt = inferType(node->children[1]);
+            if (!lt || !rt) return NULL;
+            if (strcmp(lt, "float") == 0 || strcmp(rt, "float") == 0) return "float";
+            return "int";
+        }
+        case AST_UNOP: {
+            return inferType(node->children[0]);
+        }
+        case AST_ASSIGN:
+            return inferType(node->children[1]);
+        case AST_DECL:
+            return node->op[0] ? node->op : NULL;
+        default:
+            return NULL;
     }
 }

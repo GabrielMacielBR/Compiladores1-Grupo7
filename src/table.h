@@ -13,5 +13,9 @@ void freeTable();
 void insertSymbol(char *name, char *type);
 Symbol *searchSymbol(char *name);
 void printTable();
+/* Retorna 1 se o símbolo existe com tipo diferente de 'type', 0 caso contrário */
+int checkTypeConflict(char *name, char *type);
+/* Retorna o tipo do símbolo ("int"/"float") ou NULL se não existir */
+const char *getSymbolType(char *name);
 
 #endif

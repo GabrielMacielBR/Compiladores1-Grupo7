@@ -58,6 +58,18 @@ Symbol *searchSymbol(char *name) {
     return NULL;
 }
 
+int checkTypeConflict(char *name, char *type) {
+    Symbol *s = searchSymbol(name);
+    if (!s) return 0;
+    return strcmp(s->type, type) != 0;
+}
+
+const char *getSymbolType(char *name) {
+    Symbol *s = searchSymbol(name);
+    if (!s) return NULL;
+    return s->type;
+}
+
 void printTable() {
     printf("\nTabela de Símbolos (hash):\n");
     for (int i = 0; i < TABLE_SIZE; ++i) {
