@@ -276,6 +276,10 @@ expr:
       {
         $$ = createNodeId($1);
       }
+  | IDENT LPAREN arg_list_opt RPAREN
+      {
+        $$ = createNodeFuncCall($1, $3);
+      }
   ;
 
 block:

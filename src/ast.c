@@ -157,6 +157,16 @@ NodeAST *createNodeReturn(NodeAST *value)
     return newNode;
 }
 
+NodeAST *createNodeFuncCall(char *name, NodeAST *args)
+{
+    NodeAST *newNode = createNode(AST_CALL);
+    strncpy(newNode->name, name, sizeof(newNode->name) - 1);
+    newNode->name[sizeof(newNode->name) - 1] = '\0';
+    if (args)
+        addChild(newNode, args);
+    return newNode;
+}
+
 void addChild(NodeAST *parent, NodeAST *child)
 {
     if (!parent || !child)
@@ -302,6 +312,12 @@ void printAST(NodeAST *root, int level)
             printAST(root->children[1], level);
         }
 
+        printf(")");
+        break;
+    case AST_CALL:
+        printf("%s(", root->name);
+        if (root->child_count >= 1 && root->children[0])
+            printAST(root->children[0], level);
         printf(")");
         break;
     default:
