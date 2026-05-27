@@ -38,7 +38,7 @@ NodeAST *root = NULL;
 %token WHILE FOR DO
 %token IF ELSE
 
-%type <ast> expr declaration assignment
+%type <ast> expr declaration assignment statement statements loop conditional body block init_for cond_for step_for
 
 /* Regras de precedencia e associatividade */
 %left OR
@@ -61,6 +61,15 @@ NodeAST *root = NULL;
 input:
         /* vazio */
     | input statement
+    {
+        root = $2;
+        if (root) {
+            printf("\nAST:\n");
+            printAST(root, 0);
+            printf("\n");
+            printTable();
+        }
+    }
     //| input function_definition
     | input error SEMICOLON { 
       fprintf(stderr, "[ERRO SINTATICO] Erro recuperado ate ';'\n");
@@ -70,42 +79,24 @@ input:
     ;
 
 statement:
-    declaration SEMICOLON
-    {
-        root = $1;
-
-        printf("\nAST:\n");
-        printAST(root, 0);
-        printf("\n");
-
-        printTable();
-    }
-  | assignment SEMICOLON
-    {
-        root = $1;
-
-        printf("\nAST:\n");
-        printAST(root, 0);
-        printf("\n");
-
-        printTable();
-    }
-  //| loop
-  //| conditional
+    declaration SEMICOLON { $$ = $1; }
+  | assignment SEMICOLON { $$ = $1; }
+  | loop { $$ = $1; }
+  | conditional { $$ = $1; }
   //| RETURN expr SEMICOLON { printf("INFO: return com valor %d\n", $2); }
   //| RETURN SEMICOLON { printf("INFO: return sem valor\n"); }
   ;
 
 statements:
-      /* vazio */
-    | statements statement
+      /* vazio */ { $$ = NULL; }
+    | statements statement { $$ = createNodeSeq($1, $2); }
     ;
 
 /* Regra para: int x; */
 declaration:
     INT IDENT
     {
-      if (searchSymbol($2)) {
+      if (searchSymbolInCurrentScope($2)) {
         if (checkTypeConflict($2, "int")) {
           char _msg[128];
           snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: redeclaração com tipo diferente: %s", yyline, yycolumn - (int)strlen($2), $2);
@@ -126,7 +117,7 @@ declaration:
     }
   | FLOAT IDENT
     {
-      if (searchSymbol($2)) {
+      if (searchSymbolInCurrentScope($2)) {
         if (checkTypeConflict($2, "float")) {
           char _msg[128];
           snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: redeclaração com tipo diferente: %s", yyline, yycolumn - (int)strlen($2), $2);
@@ -147,7 +138,7 @@ declaration:
     }
   | INT IDENT ASSIGN expr
     {
-      if (searchSymbol($2)) {
+      if (searchSymbolInCurrentScope($2)) {
         if (checkTypeConflict($2, "int")) {
           char _msg[128];
           snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: redeclaração com tipo diferente: %s", yyline, yycolumn - (int)strlen($2), $2);
@@ -177,7 +168,7 @@ declaration:
     }
   | FLOAT IDENT ASSIGN expr
     {
-      if (searchSymbol($2)) {
+      if (searchSymbolInCurrentScope($2)) {
         if (checkTypeConflict($2, "float")) {
           char _msg[128];
           snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: redeclaração com tipo diferente: %s", yyline, yycolumn - (int)strlen($2), $2);
@@ -289,68 +280,123 @@ assignment:
 /* Hierarquia de expressões com precedência:
    lógica -> comparação -> aritmética -> unária -> primária */
 expr:
-    expr OR expr         { $$ = createNodeBinOp("||", $1, $3); }
-  | expr AND expr        { $$ = createNodeBinOp("&&", $1, $3); }
-  | expr EQ expr         { $$ = createNodeBinOp("==", $1, $3); }
-  | expr NEQ expr        { $$ = createNodeBinOp("!=", $1, $3); }
-  | expr LT expr         { $$ = createNodeBinOp("<", $1, $3);  }
-  | expr LEQ expr        { $$ = createNodeBinOp("<=", $1, $3); }
-  | expr GT expr         { $$ = createNodeBinOp(">", $1, $3);  }
-  | expr GEQ expr        { $$ = createNodeBinOp(">=", $1, $3); }
-  | expr PLUS expr       { $$ = createNodeBinOp("+", $1, $3);  }
-  | expr MINUS expr      { $$ = createNodeBinOp("-", $1, $3);  }
-  | expr TIMES expr      { $$ = createNodeBinOp("*", $1, $3);  }
-  | expr DIVIDE expr     { $$ = createNodeBinOp("/", $1, $3);  }
-  | NOT expr             { $$ = createNodeUnOp("!", $2);       }
-  | MINUS expr %prec NOT { $$ = createNodeUnOp("-", $2);       }
-  | LPAREN expr RPAREN   { $$ = $2;                            }
-  | NUM                  { $$ = createNodeNum($1);             }
-  | IDENT                { 
-                       if (!searchSymbol($1))
-                           fprintf(stderr, "Aviso semântico [L%d:C%d]: símbolo não declarado: %s\n", yyline, yycolumn - (int)strlen($1), $1);
-                       $$ = createNodeId($1);
-                     }
+    expr OR expr {
+        $$ = createNodeBinOp("||", $1, $3);
+    }
+  | expr AND expr {
+        $$ = createNodeBinOp("&&", $1, $3); 
+    }
+  | expr EQ expr {
+        $$ = createNodeBinOp("==", $1, $3);
+    }
+  | expr NEQ expr {
+        $$ = createNodeBinOp("!=", $1, $3);
+    }
+  | expr LT expr {
+        $$ = createNodeBinOp("<", $1, $3);
+    }
+  | expr LEQ expr {
+        $$ = createNodeBinOp("<=", $1, $3);
+    }
+  | expr GT expr {
+        $$ = createNodeBinOp(">", $1, $3);
+    }
+  | expr GEQ expr {
+        $$ = createNodeBinOp(">=", $1, $3);
+    }
+  | expr PLUS expr {
+        $$ = createNodeBinOp("+", $1, $3);
+    }
+  | expr MINUS expr {
+        $$ = createNodeBinOp("-", $1, $3);
+    }
+  | expr TIMES expr {
+        $$ = createNodeBinOp("*", $1, $3);
+    }
+  | expr DIVIDE expr {
+        $$ = createNodeBinOp("/", $1, $3);
+    }
+  | NOT expr {
+        $$ = createNodeUnOp("!", $2);
+    }
+  | MINUS expr %prec NOT {
+        $$ = createNodeUnOp("-", $2);
+    }
+  | LPAREN expr RPAREN {
+        $$ = $2;
+    }
+  | NUM {
+        $$ = createNodeNum($1);
+    }
+  | IDENT { 
+        if (!searchSymbol($1))
+            fprintf(stderr, "Aviso semântico [L%d:C%d]: símbolo não declarado: %s\n", yyline, yycolumn - (int)strlen($1), $1);
+        $$ = createNodeId($1);
+    }
   ;
 
 
 block: 
-    LBRACE statements RBRACE {printf("INFO: Bloco de codigo detectado\n");}
+    LBRACE { pushScope(); } statements RBRACE {
+        $$ = $3;
+        popScope();
+        printf("INFO: Bloco de codigo detectado\n");
+    }
     ;
 
 /* Laços WHILE e FOR e DO...WHILE */
 
 init_for:
-      declaration 
-    | assignment 
-    | /* vazio */
+      declaration { $$ = $1; }
+    | assignment { $$ = $1; }
+    | /* vazio */ { $$ = NULL; }
     ;
 
 cond_for:
-    expr
-    | /* vazio */
+    expr { $$ = $1; }
+    | /* vazio */ { $$ = NULL; }
     ;
 
 step_for:
-      assignment
-    | /* vazio */
+      assignment { $$ = $1; }
+    | /* vazio */ { $$ = NULL; }
     ;
 
 body:
-      statement
-    | block
+      statement { $$ = $1; }
+    | block { $$ = $1; }
     ;
 
 loop:
-      WHILE LPAREN expr RPAREN body {printf("INFO: Laço WHILE detectado\n");}
-    | FOR LPAREN init_for SEMICOLON cond_for SEMICOLON step_for RPAREN body {printf("INFO: Laço FOR detectado\n");}
-    | DO body WHILE LPAREN expr RPAREN SEMICOLON {printf("INFO: Laço DO...WHILE detectado\n");}
+      WHILE LPAREN expr RPAREN body {
+          $$ = createNodeWhile($3, $5);
+          printf("INFO: Laço WHILE detectado\n");
+      }
+    | FOR LPAREN { pushScope(); } init_for SEMICOLON cond_for SEMICOLON step_for RPAREN body {
+          $$ = createNodeFor($4, $6, $8, $10);
+          popScope();
+          printf("INFO: Laço FOR detectado\n");
+      }
+    | DO body WHILE LPAREN expr RPAREN SEMICOLON {
+          $$ = createNodeDoWhile($2, $5);
+          printf("INFO: Laço DO...WHILE detectado\n");
+      }
     ;
 
 /* Condicionais if-else (resolvem dangling-else) */
 conditional:
-      IF LPAREN expr RPAREN statement %prec LOWER_THAN_ELSE { printf("SUCESSO: Declaração if realizada.\n"); }
-    | IF LPAREN expr RPAREN statement ELSE statement { printf("SUCESSO: Declaração if-else realizada.\n"); }
-    | expr QUESTION body COLON body { printf("SUCESSO: Declaração condicional com operador ternário realizada.\n"); }
+      IF LPAREN expr RPAREN body %prec LOWER_THAN_ELSE {
+          $$ = createNodeIf($3, $5, NULL);
+          printf("SUCESSO: Declaração if realizada.\n");
+      }
+    | IF LPAREN expr RPAREN body ELSE body {
+          $$ = createNodeIf($3, $5, $7);
+          printf("SUCESSO: Declaração if-else realizada.\n");
+      }
+    | expr QUESTION body COLON body {
+          $$ = createNodeIf($1, $3, $5);
+          printf("SUCESSO: Declaração condicional com operador ternário realizada.\n");
+      }
     ;
     
 /* Funções: definição, parâmetros e lista de argumentos */

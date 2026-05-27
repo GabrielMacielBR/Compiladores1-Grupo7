@@ -7,6 +7,7 @@
 #define TABLE_SIZE 211
 
 static Symbol *table[TABLE_SIZE];
+static int current_scope = 0;
 
 static unsigned long hash(const char *str) {
     unsigned long hash = 5381;
@@ -17,6 +18,7 @@ static unsigned long hash(const char *str) {
 }
 
 void initTable() {
+    current_scope = 0;
     for (int i = 0; i < TABLE_SIZE; ++i)
         table[i] = NULL;
 }
@@ -33,11 +35,40 @@ void freeTable() {
     }
 }
 
+void pushScope() {
+    current_scope++;
+}
+
+void popScope() {
+    for (int i = 0; i < TABLE_SIZE; ++i) {
+        Symbol *s = table[i];
+        Symbol *prev = NULL;
+        while (s) {
+            if (s->scope == current_scope) {
+                Symbol *to_delete = s;
+                if (prev) {
+                    prev->next = s->next;
+                } else {
+                    table[i] = s->next;
+                }
+                s = s->next;
+                free(to_delete);
+            } else {
+                prev = s;
+                s = s->next;
+            }
+        }
+    }
+    if (current_scope > 0) {
+        current_scope--;
+    }
+}
+
 void insertSymbol(char *name, char *type, int line, int col) {
     unsigned long h = hash(name) % TABLE_SIZE;
     /* checa se já existe no bucket */
     for (Symbol *s = table[h]; s; s = s->next) {
-        if (strcmp(s->name, name) == 0)
+        if (strcmp(s->name, name) == 0 && s->scope == current_scope)
             return;
     }
     Symbol *new = malloc(sizeof(Symbol));
@@ -48,6 +79,7 @@ void insertSymbol(char *name, char *type, int line, int col) {
     new->type[sizeof(new->type)-1] = '\0';
     new->line = line;
     new->column = col;
+    new->scope = current_scope;
     new->next = table[h];
     table[h] = new;
 }
@@ -56,6 +88,14 @@ Symbol *searchSymbol(char *name) {
     unsigned long h = hash(name) % TABLE_SIZE;
     for (Symbol *s = table[h]; s; s = s->next)
         if (strcmp(s->name, name) == 0)
+            return s;
+    return NULL;
+}
+
+Symbol *searchSymbolInCurrentScope(char *name) {
+    unsigned long h = hash(name) % TABLE_SIZE;
+    for (Symbol *s = table[h]; s; s = s->next)
+        if (strcmp(s->name, name) == 0 && s->scope == current_scope)
             return s;
     return NULL;
 }
@@ -76,6 +116,6 @@ void printTable() {
     printf("\nTabela de Símbolos (hash):\n");
     for (int i = 0; i < TABLE_SIZE; ++i) {
         for (Symbol *s = table[i]; s; s = s->next)
-            printf("Nome: %s, Tipo: %s, Decl: L%d:C%d\n", s->name, s->type, s->line, s->column);
+            printf("Nome: %s, Tipo: %s, Scope: %d, Decl: L%d:C%d\n", s->name, s->type, s->scope, s->line, s->column);
     }
 }
