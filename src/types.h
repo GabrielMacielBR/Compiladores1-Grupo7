@@ -1,6 +1,8 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+#define MAX_CHILDREN 4
+
 typedef enum {
     AST_NUM,
     AST_ID,
@@ -12,21 +14,21 @@ typedef enum {
     AST_SEQ,
     AST_IF,
     AST_WHILE,
+    AST_DO_WHILE,
     AST_FOR,
     AST_FUNC,
     AST_RETURN,
     AST_CALL
 } NodeType;
 
-typedef struct nodeAST {
+typedef struct NodeAST {
     NodeType type;
     char op[3];        // ex: "+", "==", "++"
     int value;         // Para AST_NUM
     char name[32];     // Para AST_ID e nome de funções
     
-    struct nodeAST *left;
-    struct nodeAST *right;
-    struct nodeAST *next;
+    struct NodeAST *children[MAX_CHILDREN];
+    int child_count;
 } NodeAST;
 
 #endif

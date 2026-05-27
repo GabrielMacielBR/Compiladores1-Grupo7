@@ -29,13 +29,12 @@ NodeAST *root = NULL;
 %token INT FLOAT FUNC RETURN
 %token <id> IDENT
 %token ASSIGN SEMICOLON COMMA
-%token COLON QUESTION
 %token PLUS MINUS TIMES DIVIDE LPAREN RPAREN LBRACE RBRACE
 %token EQ NEQ LT GT LEQ GEQ AND OR NOT INCREMENT DECREMENT
 %token WHILE FOR DO
 %token IF ELSE
 
-%type <ast> expr declaration assignment
+%type <ast> expr declaration assignment input statement conditional statements block body loop init_for cond_for step_for
 
 /* Regras de precedencia e associatividade */
 %left OR
@@ -56,29 +55,45 @@ NodeAST *root = NULL;
 
 /* Regras da gramatica */
 input:
-        /* vazio */
-    | input statement
+    /* vazio */
+      {
+        $$ = NULL;
+        root = NULL;
+      }
+  | input statement
+      {
+        if ($1 == NULL) {
+          $$ = $2;
+          root = $2;
+        } else {
+          $$ = createNodeSeq($1, $2);
+          root = $$;
+        }
+
+        printf("\nAST:\n");
+        printAST($2, 0);
+        printf("\n");
+
+        printTable();
+        printf("\n");
+      }
     //| input function_definition
-    | input error SEMICOLON { 
-      fprintf(stderr, "[ERRO SINTATICO] Erro recuperado ate ';'\n");
-      yyerrok; /* reset de erro */
-      yyclearin; /* limpamos o token de lookahead */
-    }
-    ;
+  | input error SEMICOLON
+      { 
+        fprintf(stderr, "[ERRO SINTATICO] Erro recuperado ate ';'\n");
+        yyerrok; /* reset de erro */
+        yyclearin; /* limpamos o token de lookahead */
+      }
+  ;
 
 statement:
     declaration SEMICOLON
-    {
+      {
+        $$ = $1;
         root = $1;
-
-        printf("\nAST:\n");
-        printAST(root, 0);
-        printf("\n");
-
-        printTable();
-    }
+      }
   | assignment SEMICOLON
-    {
+      {
         root = $1;
 
         printf("\nAST:\n");
@@ -87,70 +102,88 @@ statement:
 
         printTable();
     }
-  //| loop
-  //| conditional
+  | expr SEMICOLON
+      {
+        $$ = $1;
+        root = $1;
+      }
+  | loop
+      {
+        $$ = $1;
+      }
+  | conditional
+      {
+        $$ = $1;
+      }
   //| RETURN expr SEMICOLON { printf("INFO: return com valor %d\n", $2); }
   //| RETURN SEMICOLON { printf("INFO: return sem valor\n"); }
   ;
 
 statements:
-      /* vazio */
-    | statements statement
-    ;
+      /* vazio */ { $$ = NULL; }
+  | statements statement
+      { 
+        if ($1 == NULL) {
+          $$ = $2;
+        } else {
+          $$ = createNodeSeq($1, $2);
+        }
+      }
+  ;
 
 /* Regra para: int x; */
 declaration:
     INT IDENT    {
-    if (searchSymbol($2)) {
-      fprintf(stderr, "Aviso semântico: símbolo já declarado: %s\n", $2);
-    } else {
-      insertSymbol($2, "int");
-    }
+      if (searchSymbol($2)) {
+        fprintf(stderr, "Aviso semântico: símbolo já declarado: %s\n", $2);
+      } else {
+        insertSymbol($2, "int");
+      }
 
-    $$ = createNodeDecl(
-      "int",
-      createNodeId($2),
-      NULL
-    );
+      $$ = createNodeDecl(
+        "int",
+        createNodeId($2),
+        NULL
+      );
     }
   | FLOAT IDENT
     {
-    if (searchSymbol($2)) {
-      fprintf(stderr, "Aviso semântico: símbolo já declarado: %s\n", $2);
-    } else {
-      insertSymbol($2, "float");
-    }
-    $$ = createNodeDecl(
-      "float",
-      createNodeId($2),
-      NULL
-    );
+      if (searchSymbol($2)) {
+        fprintf(stderr, "Aviso semântico: símbolo já declarado: %s\n", $2);
+      } else {
+        insertSymbol($2, "float");
+      }
+      $$ = createNodeDecl(
+        "float",
+        createNodeId($2),
+        NULL
+      );
     }
   | INT IDENT ASSIGN expr
     {
-    if (searchSymbol($2)) {
-      fprintf(stderr, "Aviso semântico: símbolo já declarado: %s\n", $2);
-    } else {
-      insertSymbol($2, "int");
-    }
-    $$ = createNodeDecl(
-      "int",
-      createNodeId($2),
-      $4
-    );
+      if (searchSymbol($2)) {
+        fprintf(stderr, "Aviso semântico: símbolo já declarado: %s\n", $2);
+      } else {
+        insertSymbol($2, "int");
+      }
+      $$ = createNodeDecl(
+        "int",
+        createNodeId($2),
+        $4
+      );
     }
   | FLOAT IDENT ASSIGN expr
     {
-    if (searchSymbol($2)) {
-      fprintf(stderr, "Aviso semântico: símbolo já declarado: %s\n", $2);
-    } else {
-      insertSymbol($2, "float");
-    }
-    $$ = createNodeDecl(
-      "float",
-      createNodeId($2),
-      $4
-    );
+      if (searchSymbol($2)) {
+        fprintf(stderr, "Aviso semântico: símbolo já declarado: %s\n", $2);
+      } else {
+        insertSymbol($2, "float");
+      }
+      $$ = createNodeDecl(
+        "float",
+        createNodeId($2),
+        $4
+      );
     }
 ;
 
@@ -211,98 +244,190 @@ assignment:
 /* Hierarquia de expressões com precedência:
    lógica -> comparação -> aritmética -> unária -> primária */
 expr:
-    expr OR expr         { $$ = createNodeBinOp("||", $1, $3); }
-  | expr AND expr        { $$ = createNodeBinOp("&&", $1, $3); }
-  | expr EQ expr         { $$ = createNodeBinOp("==", $1, $3); }
-  | expr NEQ expr        { $$ = createNodeBinOp("!=", $1, $3); }
-  | expr LT expr         { $$ = createNodeBinOp("<", $1, $3);  }
-  | expr LEQ expr        { $$ = createNodeBinOp("<=", $1, $3); }
-  | expr GT expr         { $$ = createNodeBinOp(">", $1, $3);  }
-  | expr GEQ expr        { $$ = createNodeBinOp(">=", $1, $3); }
-  | expr PLUS expr       { $$ = createNodeBinOp("+", $1, $3);  }
-  | expr MINUS expr      { $$ = createNodeBinOp("-", $1, $3);  }
-  | expr TIMES expr      { $$ = createNodeBinOp("*", $1, $3);  }
-  | expr DIVIDE expr     { $$ = createNodeBinOp("/", $1, $3);  }
-  | NOT expr             { $$ = createNodeUnOp("!", $2);       }
-  | MINUS expr %prec NOT { $$ = createNodeUnOp("-", $2);       }
-  | LPAREN expr RPAREN   { $$ = $2;                            }
-  | NUM                  { $$ = createNodeNum($1);             }
-  | IDENT                { 
-                       if (!searchSymbol($1))
-                           fprintf(stderr, "Aviso semântico: símbolo não declarado: %s\n", $1);
-                       $$ = createNodeId($1);
-                     }
+    expr OR expr
+      {
+        $$ = createNodeBinOp("||", $1, $3);
+      }
+  | expr AND expr
+      {
+        $$ = createNodeBinOp("&&", $1, $3);
+      }
+  | expr EQ expr
+      {
+        $$ = createNodeBinOp("==", $1, $3);
+      }
+  | expr NEQ expr
+      {
+        $$ = createNodeBinOp("!=", $1, $3);
+      }
+  | expr LT expr
+      {
+        $$ = createNodeBinOp("<", $1, $3);
+      }
+  | expr LEQ expr
+      {
+        $$ = createNodeBinOp("<=", $1, $3);
+      }
+  | expr GT expr
+      {
+        $$ = createNodeBinOp(">", $1, $3);
+      }
+  | expr GEQ expr
+      {
+        $$ = createNodeBinOp(">=", $1, $3);
+      }
+  | expr PLUS expr
+      {
+        $$ = createNodeBinOp("+", $1, $3);
+      }
+  | expr MINUS expr
+      {
+        $$ = createNodeBinOp("-", $1, $3);
+      }
+  | expr TIMES expr
+      {
+        $$ = createNodeBinOp("*", $1, $3);
+      }
+  | expr DIVIDE expr
+      {
+        $$ = createNodeBinOp("/", $1, $3);
+      }
+  | NOT expr
+      {
+        $$ = createNodeUnOp("!", $2);
+      }
+  | MINUS expr %prec NOT
+      {
+        $$ = createNodeUnOp("-", $2);
+      }
+  | LPAREN expr RPAREN
+      {
+        $$ = $2;
+      }
+  | NUM
+      {
+        $$ = createNodeNum($1);
+      }
+  | IDENT
+      {
+        if (!searchSymbol($1))
+          fprintf(stderr, "Aviso semântico: símbolo não declarado: %s\n", $1);
+        $$ = createNodeId($1);
+      }
   ;
 
-
-block: 
-    LBRACE statements RBRACE {printf("INFO: Bloco de codigo detectado\n");}
-    ;
+block:
+    LBRACE statements RBRACE
+      {
+        $$ = $2;
+      }
+  ;
 
 /* Laços WHILE e FOR e DO...WHILE */
 
 init_for:
-      declaration 
-    | assignment 
-    | /* vazio */
-    ;
+    declaration
+      {
+        $$ = $1;
+      }
+  | assignment
+      {
+        $$ = $1;
+      }
+  | /* vazio */
+      {
+        $$ = NULL;
+      }
+  ;
 
 cond_for:
     expr
-    | /* vazio */
-    ;
+      {
+        $$ = $1;
+      }
+  | /* vazio */
+      {
+        $$ = NULL;
+      }
+  ;
 
 step_for:
-      assignment
-    | /* vazio */
-    ;
+    assignment
+      {
+        $$ = $1;
+      }
+  | /* vazio */
+      {
+        $$ = NULL;
+      }
+  ;
 
 body:
-      statement
-    | block
-    ;
+    statement
+  | block
+  ;
 
-loop:
-      WHILE LPAREN expr RPAREN body {printf("INFO: Laço WHILE detectado\n");}
-    | FOR LPAREN init_for SEMICOLON cond_for SEMICOLON step_for RPAREN body {printf("INFO: Laço FOR detectado\n");}
-    | DO body WHILE LPAREN expr RPAREN SEMICOLON {printf("INFO: Laço DO...WHILE detectado\n");}
-    ;
+loop: 
+    FOR LPAREN init_for SEMICOLON cond_for SEMICOLON step_for RPAREN body
+      {
+        $$ = createNodeFor($3, $5, $7, $9);
+      }
+  | WHILE LPAREN expr RPAREN body
+      {
+        $$ = createNodeWhile($3, $5);
+      }
+  | DO body WHILE LPAREN expr RPAREN SEMICOLON
+      {
+        $$ = createNodeDoWhile($2, $5);
+      }
+  ;
 
 /* Condicionais if-else (resolvem dangling-else) */
 conditional:
-      IF LPAREN expr RPAREN statement %prec LOWER_THAN_ELSE { printf("SUCESSO: Declaração if realizada.\n"); }
-    | IF LPAREN expr RPAREN statement ELSE statement { printf("SUCESSO: Declaração if-else realizada.\n"); }
-    | expr QUESTION body COLON body { printf("SUCESSO: Declaração condicional com operador ternário realizada.\n"); }
-    ;
+    IF LPAREN expr RPAREN body %prec LOWER_THAN_ELSE
+      {
+        $$ = createNodeIf($3, $5, NULL);
+      }
+  | IF LPAREN expr RPAREN body ELSE body
+      {
+        $$ = createNodeIf($3, $5, $7);
+      }
+  ;
     
 /* Funções: definição, parâmetros e lista de argumentos */
 function_definition:
-  FUNC INT IDENT LPAREN parameter_list_opt RPAREN block { printf("INFO: Função definida: %s\n", $3); }
-    ;
+    FUNC INT IDENT LPAREN parameter_list_opt RPAREN block
+      {
+        printf("INFO: Função definida: %s\n", $3);
+      }
+  ;
 
 parameter_list_opt:
-      /* vazio */
-    | parameter_list
-    ;
+    /* vazio */
+  | parameter_list
+  ;
 
 parameter_list:
-      parameter
-    | parameter_list COMMA parameter
-    ;
+    parameter
+  | parameter_list COMMA parameter
+  ;
 
 parameter:
-      INT IDENT { printf("INFO: Parametro: %s\n", $2); }
-    ;
+    INT IDENT
+      {
+        printf("INFO: Parametro: %s\n", $2);
+      }
+  ;
 
 arg_list_opt:
-      /* vazio */
-    | arg_list
-    ;
+    /* vazio */
+  | arg_list
+  ;
 
 arg_list:
-      expr
-    | arg_list COMMA expr
-    ;
+    expr
+  | arg_list COMMA expr
+  ;
 
 %%
 
@@ -315,5 +440,5 @@ int main(void) {
 }
 
 void yyerror(const char *s) {
-    fprintf(stderr, "Erro sintático: %s\n", s);
+  fprintf(stderr, "Erro sintático: %s\n", s);
 }
