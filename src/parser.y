@@ -35,6 +35,7 @@ NodeAST *root = NULL;
 %token IF ELSE
 
 %type <ast> expr declaration assignment input statement conditional statements block body loop init_for cond_for step_for
+%type <ast> function_definition parameter_list parameter parameter_list_opt arg_list arg_list_opt
 
 /* Regras de precedencia e associatividade */
 %left OR
@@ -61,6 +62,8 @@ input:
         root = NULL;
       }
   | input statement
+
+  | input function_definition
       {
         if ($1 == NULL) {
           $$ = $2;
@@ -70,7 +73,8 @@ input:
           root = $$;
         }
 
-        printf("\nAST:\n");
+        /* função também será exibida como statement composto */
+        printf("\nAST (função):\n");
         printAST($2, 0);
         printf("\n");
 
@@ -110,7 +114,14 @@ statement:
         $$ = $1;
       }
   //| RETURN expr SEMICOLON { printf("INFO: return com valor %d\n", $2); }
-  //| RETURN SEMICOLON { printf("INFO: return sem valor\n"); }
+  | RETURN expr SEMICOLON
+      {
+        $$ = createNodeReturn($2);
+      }
+  | RETURN SEMICOLON
+      {
+        $$ = createNodeReturn(NULL);
+      }
   ;
 
 statements:
@@ -349,35 +360,52 @@ conditional:
 function_definition:
     FUNC INT IDENT LPAREN parameter_list_opt RPAREN block
       {
+        /* Cria nó de função: nome, tipo de retorno (int por enquanto), lista de parâmetros e corpo */
+        $$ = createNodeFunc($3, "int", $5, $7);
         printf("INFO: Função definida: %s\n", $3);
       }
   ;
 
 parameter_list_opt:
-    /* vazio */
-  | parameter_list
+    /* vazio */ { $$ = NULL; }
+  | parameter_list { $$ = $1; }
   ;
 
 parameter_list:
-    parameter
+    parameter { $$ = $1; }
   | parameter_list COMMA parameter
+      {
+        if ($1 == NULL) {
+          $$ = $3;
+        } else {
+          $$ = createNodeSeq($1, $3);
+        }
+      }
   ;
 
 parameter:
     INT IDENT
       {
-        printf("INFO: Parametro: %s\n", $2);
+        /* Representa parâmetro como declaração sem valor */
+        $$ = createNodeDecl("int", createNodeId($2), NULL);
       }
   ;
 
 arg_list_opt:
-    /* vazio */
-  | arg_list
+    /* vazio */ { $$ = NULL; }
+  | arg_list { $$ = $1; }
   ;
 
 arg_list:
-    expr
+    expr { $$ = $1; }
   | arg_list COMMA expr
+      {
+        if ($1 == NULL) {
+          $$ = $3;
+        } else {
+          $$ = createNodeSeq($1, $3);
+        }
+      }
   ;
 
 %%
