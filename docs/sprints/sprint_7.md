@@ -1,6 +1,6 @@
 # Sprint 7
 
-**Período:** 27/05 a 03/05  
+**Período:** 04/05 a 10/05  
 **Status:** ✅ Concluída  
 
 ## Objetivo
