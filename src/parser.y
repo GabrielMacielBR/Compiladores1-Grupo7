@@ -437,7 +437,7 @@ function_definition:
     }
     function_block
     {
-      $$ = createNodeFunc("int", $2, $8);
+      $$ = createNodeFunc("int", $2, NULL, $8);
       popScope();
       printf("INFO: Função definida: %s\n", $2);
     }
@@ -458,7 +458,7 @@ function_definition:
     }
     function_block
     {
-      $$ = createNodeFunc("float", $2, $8);
+      $$ = createNodeFunc("float", $2, NULL, $8);
       popScope();
       printf("INFO: Função definida: %s\n", $2);
     }

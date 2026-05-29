@@ -84,6 +84,7 @@ void insertSymbol(char *name, char *type, int line, int col) {
     new->line = line;
     new->column = col;
     new->scope = current_scope;
+    new->ast = NULL;
     new->param_count = 0;
     new->next = table[h];
     table[h] = new;
