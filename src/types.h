@@ -26,7 +26,7 @@ typedef enum {
 
 typedef struct NodeAST {
     NodeType type;
-    char op[3];        // ex: "+", "==", "++"
+    char op[16];        // ex: "+", "==", "int", "float"
     int value;         // Para AST_NUM
     float floatValue;  // Para AST_FLOAT
     char name[32];     // Para AST_ID e nome de funções
