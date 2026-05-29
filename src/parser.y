@@ -42,6 +42,7 @@ static int current_function_has_return = 0;
 
 %type <ast> expr declaration assignment statement statements loop conditional body block init_for cond_for step_for
 %type <ast> function_definition function_block function_call return_statement arg_list_opt arg_list
+%type <ast> parameter_list_opt parameter_list parameter
 %type <id> type_specifier
 
 /* Regras de precedencia e associatividade */
@@ -438,7 +439,7 @@ function_definition:
     }
     parameter_list_opt RPAREN function_block
     {
-      $$ = createNodeFunc("int", $2, $7);
+      $$ = createNodeFunc("int", $2, $5, $7);
       popScope();
       if (!current_function_has_return) {
         fprintf(stderr, "Aviso semântico [L%d:C%d]: função '%s' não possui return\n", yyline, yycolumn, $2);
@@ -462,7 +463,7 @@ function_definition:
     }
     parameter_list_opt RPAREN function_block
     {
-      $$ = createNodeFunc("float", $2, $7);
+      $$ = createNodeFunc("float", $2, $5, $7);
       popScope();
       if (!current_function_has_return) {
         fprintf(stderr, "Aviso semântico [L%d:C%d]: função '%s' não possui return\n", yyline, yycolumn, $2);
@@ -481,13 +482,13 @@ function_block:
     ;
 
 parameter_list_opt:
-      /* vazio */
-    | parameter_list
+      /* vazio */ { $$ = NULL; }
+    | parameter_list { $$ = $1; }
     ;
 
 parameter_list:
-      parameter
-    | parameter_list COMMA parameter
+      parameter { $$ = $1; }
+    | parameter_list COMMA parameter { $$ = createNodeSeq($1, $3); }
     ;
 
 parameter:
@@ -499,6 +500,7 @@ parameter:
           insertSymbol($2, $1, yyline, yycolumn - (int)strlen($2));
         }
 
+        $$ = createNodeDecl($1, createNodeId($2), NULL);
         printf("INFO: Parametro: %s\n", $2);
       }
     ;

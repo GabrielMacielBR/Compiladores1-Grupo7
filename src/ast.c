@@ -137,10 +137,13 @@ NodeAST *createNodeDecl(char *type, NodeAST *id, NodeAST *value) {
     return newNode;
 }
 
-NodeAST *createNodeFunc(char *type, char *name, NodeAST *body) {
+NodeAST *createNodeFunc(char *type, char *name, NodeAST *params, NodeAST *body) {
     NodeAST *newNode = createNode(AST_FUNC);
     strcpy(newNode->op, type);
     strcpy(newNode->name, name);
+
+    if (params)
+        addChild(newNode, params);
 
     if (body)
         addChild(newNode, body);
@@ -277,10 +280,17 @@ void printAST(NodeAST *root, int level) {
             printf(")");
             break;
         case AST_FUNC:
-            printf("%s %s() {\n", root->op, root->name);
+            printf("%s %s(", root->op, root->name);
 
             if (root->child_count > 0)
                 printAST(root->children[0], level);
+
+            printf(") {");
+
+            if (root->child_count > 1) {
+                printf("\n");
+                printAST(root->children[1], level);
+            }
 
             printf("\n}");
             break;

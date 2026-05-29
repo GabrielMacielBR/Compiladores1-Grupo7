@@ -19,7 +19,7 @@ NodeAST *createNodeDoWhile(NodeAST *body, NodeAST *cond);
 NodeAST *createNodeAssign(NodeAST *id, NodeAST *value);
 NodeAST *createNodeDecl(char *type, NodeAST *id, NodeAST *value);
 
-NodeAST *createNodeFunc(char *type, char *name, NodeAST *body);
+NodeAST *createNodeFunc(char *type, char *name, NodeAST *params, NodeAST *body);
 NodeAST *createNodeCall(char *name, NodeAST *args);
 NodeAST *createNodeReturn(NodeAST *value);
 
