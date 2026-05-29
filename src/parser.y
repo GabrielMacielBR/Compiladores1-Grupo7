@@ -14,6 +14,8 @@ void yyerror(const char *s);
 
 int yydebug = 0;
 NodeAST *root = NULL;
+static const char *current_function_return_type = NULL;
+static int current_function_has_return = 0;
 %}
 
 %code requires {
@@ -430,12 +432,18 @@ function_definition:
       }
 
       insertFunction($2, "int", yyline, yycolumn - (int)strlen($2) - 1);
+      current_function_return_type = "int";
+      current_function_has_return = 0;
       pushScope();
     }
     parameter_list_opt RPAREN function_block
     {
       $$ = createNodeFunc("int", $2, $7);
       popScope();
+      if (!current_function_has_return) {
+        fprintf(stderr, "Aviso semântico [L%d:C%d]: função '%s' não possui return\n", yyline, yycolumn, $2);
+      }
+      current_function_return_type = NULL;
       printf("INFO: Função definida: %s\n", $2);
     }
   | FLOAT IDENT LPAREN
@@ -448,12 +456,18 @@ function_definition:
       }
 
       insertFunction($2, "float", yyline, yycolumn - (int)strlen($2) - 1);
+      current_function_return_type = "float";
+      current_function_has_return = 0;
       pushScope();
     }
     parameter_list_opt RPAREN function_block
     {
       $$ = createNodeFunc("float", $2, $7);
       popScope();
+      if (!current_function_has_return) {
+        fprintf(stderr, "Aviso semântico [L%d:C%d]: função '%s' não possui return\n", yyline, yycolumn, $2);
+      }
+      current_function_return_type = NULL;
       printf("INFO: Função definida: %s\n", $2);
     }
     ;
@@ -516,8 +530,19 @@ arg_list:
     ;
 
 return_statement:
-      RETURN expr { $$ = createNodeReturn($2); }
-    | RETURN { $$ = createNodeReturn(NULL); }
+      RETURN expr {
+        if (current_function_return_type && $2 && strlen($2->dataType) > 0 && strcmp(current_function_return_type, $2->dataType) != 0) {
+          char _msg[160];
+          snprintf(_msg, sizeof(_msg), "Aviso semântico [L%d:C%d]: tipo de retorno incompatível, esperado %s", yyline, yycolumn, current_function_return_type);
+          fprintf(stderr, "%s\n", _msg);
+        }
+        current_function_has_return = 1;
+        $$ = createNodeReturn($2);
+      }
+    | RETURN {
+        current_function_has_return = 1;
+        $$ = createNodeReturn(NULL);
+      }
     ;
 
 %%
