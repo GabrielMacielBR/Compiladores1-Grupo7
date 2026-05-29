@@ -11,6 +11,7 @@ extern int yycolumn;
 /* Prototipos para evitar avisos de funcao implicita */
 int yylex(void);
 void yyerror(const char *s);
+int countArguments(NodeAST *args);
 
 int yydebug = 0;
 NodeAST *root = NULL;
@@ -41,6 +42,7 @@ NodeAST *root = NULL;
 %type <ast> expr declaration assignment statement statements loop conditional body block init_for cond_for step_for
 %type <ast> function_definition function_block function_call return_statement arg_list_opt arg_list
 %type <id> type_specifier
+%type <intValue> parameter_list_opt parameter_list parameter
 
 /* Regras de precedencia e associatividade */
 %left OR
@@ -429,12 +431,15 @@ function_definition:
         YYABORT;
       }
 
-      insertFunction($2, "int", yyline, yycolumn - (int)strlen($2) - 1);
       pushScope();
     }
-    parameter_list_opt RPAREN function_block
+    parameter_list_opt RPAREN
     {
-      $$ = createNodeFunc("int", $2, $7);
+      insertFunction($2, "int", $5, yyline, yycolumn - (int)strlen($2) - 1);
+    }
+    function_block
+    {
+      $$ = createNodeFunc("int", $2, $8);
       popScope();
       printf("INFO: Função definida: %s\n", $2);
     }
@@ -447,12 +452,15 @@ function_definition:
         YYABORT;
       }
 
-      insertFunction($2, "float", yyline, yycolumn - (int)strlen($2) - 1);
       pushScope();
     }
-    parameter_list_opt RPAREN function_block
+    parameter_list_opt RPAREN
     {
-      $$ = createNodeFunc("float", $2, $7);
+      insertFunction($2, "float", $5, yyline, yycolumn - (int)strlen($2) - 1);
+    }
+    function_block
+    {
+      $$ = createNodeFunc("float", $2, $8);
       popScope();
       printf("INFO: Função definida: %s\n", $2);
     }
@@ -467,13 +475,13 @@ function_block:
     ;
 
 parameter_list_opt:
-      /* vazio */
-    | parameter_list
+      /* vazio */ { $$ = 0; }
+    | parameter_list { $$ = $1; }
     ;
 
 parameter_list:
-      parameter
-    | parameter_list COMMA parameter
+      parameter { $$ = $1; }
+    | parameter_list COMMA parameter { $$ = $1 + $3; }
     ;
 
 parameter:
@@ -486,22 +494,31 @@ parameter:
         }
 
         printf("INFO: Parametro: %s\n", $2);
+        $$ = 1;
       }
     ;
 
 function_call:
-    IDENT
+    IDENT LPAREN arg_list_opt RPAREN
     {
-      if (!searchFunction($1)) {
+      Symbol *func = searchFunction($1);
+
+      if (!func) {
         char _msg[128];
         snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: função não declarada: %s", yyline, yycolumn - (int)strlen($1), $1);
         yyerror(_msg);
         YYABORT;
       }
-    }
-    LPAREN arg_list_opt RPAREN
-    {
-      $$ = createNodeCall($1, $4);
+
+      int arg_count = countArguments($3);
+      if (arg_count != func->param_count) {
+        char _msg[160];
+        snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: quantidade de argumentos incompatível na chamada de função: %s", yyline, yycolumn - (int)strlen($1), $1);
+        yyerror(_msg);
+        YYABORT;
+      }
+
+      $$ = createNodeCall($1, $3);
     }
     ;
 
@@ -521,6 +538,16 @@ return_statement:
     ;
 
 %%
+
+int countArguments(NodeAST *args) {
+    if (!args)
+        return 0;
+
+    if (args->type == AST_SEQ)
+        return countArguments(args->children[0]) + countArguments(args->children[1]);
+
+    return 1;
+}
 
 int main(void) {
     printf("Digite expressoes terminadas com ';'. Pressione Ctrl+D para encerrar.\n");
