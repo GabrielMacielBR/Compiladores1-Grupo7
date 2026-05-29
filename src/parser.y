@@ -14,6 +14,8 @@ void yyerror(const char *s);
 
 int yydebug = 0;
 NodeAST *root = NULL;
+static const char *current_function_return_type = NULL;
+static int current_function_has_return = 0;
 %}
 
 %code requires {
@@ -39,6 +41,8 @@ NodeAST *root = NULL;
 %token IF ELSE
 
 %type <ast> expr declaration assignment statement statements loop conditional body block init_for cond_for step_for
+%type <ast> function_definition function_block function_call return_statement arg_list_opt arg_list
+%type <id> type_specifier
 
 /* Regras de precedencia e associatividade */
 %left OR
@@ -70,7 +74,16 @@ input:
             printTable();
         }
     }
-    //| input function_definition
+    | input function_definition
+    {
+        root = $2;
+        if (root) {
+            printf("\nAST:\n");
+            printAST(root, 0);
+            printf("\n");
+            printTable();
+        }
+    }
     | input error SEMICOLON { 
       fprintf(stderr, "[ERRO SINTATICO] Erro recuperado ate ';'\n");
       yyerrok; /* reset de erro */
@@ -81,10 +94,10 @@ input:
 statement:
     declaration SEMICOLON { $$ = $1; }
   | assignment SEMICOLON { $$ = $1; }
+  | function_call SEMICOLON { $$ = $1; }
+  | return_statement SEMICOLON { $$ = $1; }
   | loop { $$ = $1; }
   | conditional { $$ = $1; }
-  //| RETURN expr SEMICOLON { printf("INFO: return com valor %d\n", $2); }
-  //| RETURN SEMICOLON { printf("INFO: return sem valor\n"); }
   ;
 
 statements:
@@ -328,6 +341,9 @@ expr:
   | NUM {
         $$ = createNodeNum($1);
     }
+  | function_call {
+        $$ = $1;
+    }
   | IDENT { 
         if (!searchSymbol($1))
             fprintf(stderr, "Aviso semântico [L%d:C%d]: símbolo não declarado: %s\n", yyline, yycolumn - (int)strlen($1), $1);
@@ -398,10 +414,70 @@ conditional:
           printf("SUCESSO: Declaração condicional com operador ternário realizada.\n");
       }
     ;
-    
-/* Funções: definição, parâmetros e lista de argumentos */
+
+/* Funções: definição, parâmetros, chamadas e retorno */
+type_specifier:
+      INT { $$ = "int"; }
+    | FLOAT { $$ = "float"; }
+    ;
+
 function_definition:
-  FUNC INT IDENT LPAREN parameter_list_opt RPAREN block { printf("INFO: Função definida: %s\n", $3); }
+    INT IDENT LPAREN
+    {
+      if (searchFunction($2)) {
+        char _msg[128];
+        snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: função já declarada: %s", yyline, yycolumn - (int)strlen($2) - 1, $2);
+        yyerror(_msg);
+        YYABORT;
+      }
+
+      insertFunction($2, "int", yyline, yycolumn - (int)strlen($2) - 1);
+      current_function_return_type = "int";
+      current_function_has_return = 0;
+      pushScope();
+    }
+    parameter_list_opt RPAREN function_block
+    {
+      $$ = createNodeFunc("int", $2, $7);
+      popScope();
+      if (!current_function_has_return) {
+        fprintf(stderr, "Aviso semântico [L%d:C%d]: função '%s' não possui return\n", yyline, yycolumn, $2);
+      }
+      current_function_return_type = NULL;
+      printf("INFO: Função definida: %s\n", $2);
+    }
+  | FLOAT IDENT LPAREN
+    {
+      if (searchFunction($2)) {
+        char _msg[128];
+        snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: função já declarada: %s", yyline, yycolumn - (int)strlen($2) - 1, $2);
+        yyerror(_msg);
+        YYABORT;
+      }
+
+      insertFunction($2, "float", yyline, yycolumn - (int)strlen($2) - 1);
+      current_function_return_type = "float";
+      current_function_has_return = 0;
+      pushScope();
+    }
+    parameter_list_opt RPAREN function_block
+    {
+      $$ = createNodeFunc("float", $2, $7);
+      popScope();
+      if (!current_function_has_return) {
+        fprintf(stderr, "Aviso semântico [L%d:C%d]: função '%s' não possui return\n", yyline, yycolumn, $2);
+      }
+      current_function_return_type = NULL;
+      printf("INFO: Função definida: %s\n", $2);
+    }
+    ;
+
+function_block:
+    LBRACE statements RBRACE
+    {
+      $$ = $2;
+      printf("INFO: Bloco de codigo detectado\n");
+    }
     ;
 
 parameter_list_opt:
@@ -415,27 +491,68 @@ parameter_list:
     ;
 
 parameter:
-      INT IDENT { printf("INFO: Parametro: %s\n", $2); }
+      type_specifier IDENT
+      {
+        if (searchSymbolInCurrentScope($2)) {
+          fprintf(stderr, "Aviso semântico [L%d:C%d]: parâmetro já declarado: %s\n", yyline, yycolumn - (int)strlen($2), $2);
+        } else {
+          insertSymbol($2, $1, yyline, yycolumn - (int)strlen($2));
+        }
+
+        printf("INFO: Parametro: %s\n", $2);
+      }
+    ;
+
+function_call:
+    IDENT
+    {
+      if (!searchFunction($1)) {
+        char _msg[128];
+        snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: função não declarada: %s", yyline, yycolumn - (int)strlen($1), $1);
+        yyerror(_msg);
+        YYABORT;
+      }
+    }
+    LPAREN arg_list_opt RPAREN
+    {
+      $$ = createNodeCall($1, $4);
+    }
     ;
 
 arg_list_opt:
-      /* vazio */
-    | arg_list
+      /* vazio */ { $$ = NULL; }
+    | arg_list { $$ = $1; }
     ;
 
 arg_list:
-      expr
-    | arg_list COMMA expr
+      expr { $$ = $1; }
+    | arg_list COMMA expr { $$ = createNodeSeq($1, $3); }
+    ;
+
+return_statement:
+      RETURN expr {
+        if (current_function_return_type && $2 && strlen($2->dataType) > 0 && strcmp(current_function_return_type, $2->dataType) != 0) {
+          char _msg[160];
+          snprintf(_msg, sizeof(_msg), "Aviso semântico [L%d:C%d]: tipo de retorno incompatível, esperado %s", yyline, yycolumn, current_function_return_type);
+          fprintf(stderr, "%s\n", _msg);
+        }
+        current_function_has_return = 1;
+        $$ = createNodeReturn($2);
+      }
+    | RETURN {
+        current_function_has_return = 1;
+        $$ = createNodeReturn(NULL);
+      }
     ;
 
 %%
 
 int main(void) {
     printf("Digite expressoes terminadas com ';'. Pressione Ctrl+D para encerrar.\n");
-      initTable();
-      int ret = yyparse();
-      freeTable();
-      return ret;
+    initTable();
+    int ret = yyparse();
+    freeTable();
+    return ret;
 }
 
 void yyerror(const char *s) {

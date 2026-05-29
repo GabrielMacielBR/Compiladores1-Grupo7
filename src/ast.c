@@ -137,6 +137,41 @@ NodeAST *createNodeDecl(char *type, NodeAST *id, NodeAST *value) {
     return newNode;
 }
 
+NodeAST *createNodeFunc(char *type, char *name, NodeAST *body) {
+    NodeAST *newNode = createNode(AST_FUNC);
+    strcpy(newNode->op, type);
+    strcpy(newNode->name, name);
+
+    if (body)
+        addChild(newNode, body);
+
+    return newNode;
+}
+
+NodeAST *createNodeCall(char *name, NodeAST *args) {
+    NodeAST *newNode = createNode(AST_CALL);
+    strcpy(newNode->name, name);
+
+    Symbol *func = searchFunction(name);
+    if (func)
+        strcpy(newNode->dataType, func->type);
+
+    if (args)
+        addChild(newNode, args);
+
+    return newNode;
+}
+
+NodeAST *createNodeReturn(NodeAST *value) {
+    NodeAST *newNode = createNode(AST_RETURN);
+
+    if (value)
+        addChild(newNode, value);
+
+    return newNode;
+}
+
+
 void addChild(NodeAST *parent, NodeAST *child) {
     if (!parent || !child)
         return;
@@ -240,6 +275,30 @@ void printAST(NodeAST *root, int level) {
             printf(" = ");
             printAST(root->children[1], level);
             printf(")");
+            break;
+        case AST_FUNC:
+            printf("%s %s() {\n", root->op, root->name);
+
+            if (root->child_count > 0)
+                printAST(root->children[0], level);
+
+            printf("\n}");
+            break;
+        case AST_CALL:
+            printf("%s(", root->name);
+
+            if (root->child_count > 0)
+                printAST(root->children[0], level);
+
+            printf(")");
+            break;
+        case AST_RETURN:
+            printf("return");
+
+            if (root->child_count > 0) {
+                printf(" ");
+                printAST(root->children[0], level);
+            }
             break;
         case AST_DECL:
             printf("(DECL %s ", root->op);

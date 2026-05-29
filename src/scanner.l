@@ -54,7 +54,7 @@ void        { /* return VOID; */ }
 volatile    { /* return VOLATILE; */ }
 while       { return WHILE; }
 
-[ \t\n]+    { /* ignora espaços, tabs e quebras de linha */ }
+[ \t\r\n]+    { /* ignora espaços, tabs e quebras de linha */ }
 
 "//".*     { /* Ignorar comentários de linha */ }
 "/*"([^*]|\*+[^*/])*\*+\/    { /* Ignorar comentários de bloco */ }
