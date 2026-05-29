@@ -440,6 +440,7 @@ function_definition:
     parameter_list_opt RPAREN function_block
     {
       $$ = createNodeFunc("int", $2, $5, $7);
+      setFunctionAst($2, $$);
       popScope();
       if (!current_function_has_return) {
         fprintf(stderr, "Aviso semântico [L%d:C%d]: função '%s' não possui return\n", yyline, yycolumn, $2);
@@ -464,6 +465,7 @@ function_definition:
     parameter_list_opt RPAREN function_block
     {
       $$ = createNodeFunc("float", $2, $5, $7);
+      setFunctionAst($2, $$);
       popScope();
       if (!current_function_has_return) {
         fprintf(stderr, "Aviso semântico [L%d:C%d]: função '%s' não possui return\n", yyline, yycolumn, $2);
@@ -517,6 +519,11 @@ function_call:
     }
     LPAREN arg_list_opt RPAREN
     {
+      char _msg[160];
+      if (!checkFunctionCallArgs($1, $4, _msg, sizeof(_msg))) {
+        yyerror(_msg);
+        YYABORT;
+      }
       $$ = createNodeCall($1, $4);
     }
     ;
