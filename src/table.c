@@ -68,7 +68,9 @@ void insertSymbol(char *name, char *type, int line, int col) {
     unsigned long h = hash(name) % TABLE_SIZE;
     /* checa se já existe no bucket */
     for (Symbol *s = table[h]; s; s = s->next) {
-        if (strcmp(s->name, name) == 0 && s->scope == current_scope)
+        if (strcmp(s->name, name) == 0 &&
+            strcmp(s->kind, "var") == 0 &&
+            s->scope == current_scope)
             return;
     }
     Symbol *new = malloc(sizeof(Symbol));
@@ -77,6 +79,8 @@ void insertSymbol(char *name, char *type, int line, int col) {
     new->name[sizeof(new->name)-1] = '\0';
     strncpy(new->type, type, sizeof(new->type)-1);
     new->type[sizeof(new->type)-1] = '\0';
+    strncpy(new->kind, "var", sizeof(new->kind)-1);
+    new->kind[sizeof(new->kind)-1] = '\0';
     new->line = line;
     new->column = col;
     new->scope = current_scope;
@@ -84,10 +88,37 @@ void insertSymbol(char *name, char *type, int line, int col) {
     table[h] = new;
 }
 
+void insertFunction(char *name, char *returnType, int line, int col) {
+    unsigned long h = hash(name) % TABLE_SIZE;
+
+    for (Symbol *s = table[h]; s; s = s->next) {
+        if (strcmp(s->name, name) == 0 && strcmp(s->kind, "func") == 0)
+            return;
+    }
+
+    Symbol *new = malloc(sizeof(Symbol));
+    if (!new) return;
+
+    strncpy(new->name, name, sizeof(new->name)-1);
+    new->name[sizeof(new->name)-1] = '\0';
+
+    strncpy(new->type, returnType, sizeof(new->type)-1);
+    new->type[sizeof(new->type)-1] = '\0';
+
+    strncpy(new->kind, "func", sizeof(new->kind)-1);
+    new->kind[sizeof(new->kind)-1] = '\0';
+
+    new->line = line;
+    new->column = col;
+    new->scope = 0;
+    new->next = table[h];
+    table[h] = new;
+}
+
 Symbol *searchSymbol(char *name) {
     unsigned long h = hash(name) % TABLE_SIZE;
     for (Symbol *s = table[h]; s; s = s->next)
-        if (strcmp(s->name, name) == 0)
+        if (strcmp(s->name, name) == 0 && strcmp(s->kind, "var") == 0)
             return s;
     return NULL;
 }
@@ -95,7 +126,15 @@ Symbol *searchSymbol(char *name) {
 Symbol *searchSymbolInCurrentScope(char *name) {
     unsigned long h = hash(name) % TABLE_SIZE;
     for (Symbol *s = table[h]; s; s = s->next)
-        if (strcmp(s->name, name) == 0 && s->scope == current_scope)
+        if (strcmp(s->name, name) == 0 && strcmp(s->kind, "var") == 0 && s->scope == current_scope)
+            return s;
+    return NULL;
+}
+
+Symbol *searchFunction(char *name) {
+    unsigned long h = hash(name) % TABLE_SIZE;
+    for (Symbol *s = table[h]; s; s = s->next)
+        if (strcmp(s->name, name) == 0 && strcmp(s->kind, "func") == 0)
             return s;
     return NULL;
 }
@@ -116,6 +155,6 @@ void printTable() {
     printf("\nTabela de Símbolos (hash):\n");
     for (int i = 0; i < TABLE_SIZE; ++i) {
         for (Symbol *s = table[i]; s; s = s->next)
-            printf("Nome: %s, Tipo: %s, Scope: %d, Decl: L%d:C%d\n", s->name, s->type, s->scope, s->line, s->column);
+            printf("Nome: %s, Tipo: %s, Kind: %s, Scope: %d, Decl: L%d:C%d\n", s->name, s->type, s->kind, s->scope, s->line, s->column);
     }
 }
