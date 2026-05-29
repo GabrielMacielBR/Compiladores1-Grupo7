@@ -113,8 +113,22 @@ void insertFunction(char *name, char *returnType, int param_count, int line, int
     new->line = line;
     new->column = col;
     new->scope = 0;
+    new->ast = NULL;
     new->next = table[h];
     table[h] = new;
+}
+
+void setFunctionAst(char *name, NodeAST *ast) {
+    Symbol *s = searchFunction(name);
+    if (s) {
+        s->ast = ast;
+    }
+}
+
+NodeAST *getFunctionAst(char *name) {
+    Symbol *s = searchFunction(name);
+    if (!s) return NULL;
+    return s->ast;
 }
 
 Symbol *searchSymbol(char *name) {

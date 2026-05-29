@@ -84,7 +84,7 @@ input:
             printTable();
         }
     }
-    | input error SEMICOLON { 
+    | input error SEMICOLON {
       fprintf(stderr, "[ERRO SINTATICO] Erro recuperado ate ';'\n");
       yyerrok; /* reset de erro */
       yyclearin; /* limpamos o token de lookahead */
@@ -297,7 +297,7 @@ expr:
         $$ = createNodeBinOp("||", $1, $3);
     }
   | expr AND expr {
-        $$ = createNodeBinOp("&&", $1, $3); 
+        $$ = createNodeBinOp("&&", $1, $3);
     }
   | expr EQ expr {
         $$ = createNodeBinOp("==", $1, $3);
@@ -344,15 +344,14 @@ expr:
   | function_call {
         $$ = $1;
     }
-  | IDENT { 
+  | IDENT {
         if (!searchSymbol($1))
             fprintf(stderr, "Aviso semântico [L%d:C%d]: símbolo não declarado: %s\n", yyline, yycolumn - (int)strlen($1), $1);
         $$ = createNodeId($1);
     }
   ;
 
-
-block: 
+block:
     LBRACE { pushScope(); } statements RBRACE {
         $$ = $3;
         popScope();
@@ -361,7 +360,6 @@ block:
     ;
 
 /* Laços WHILE e FOR e DO...WHILE */
-
 init_for:
       declaration { $$ = $1; }
     | assignment { $$ = $1; }

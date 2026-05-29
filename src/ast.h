@@ -1,6 +1,7 @@
 #ifndef AST_H
 #define AST_H
 
+#include <stddef.h>
 #include "types.h"
 
 NodeAST *createNode(NodeType type);
@@ -19,9 +20,10 @@ NodeAST *createNodeDoWhile(NodeAST *body, NodeAST *cond);
 NodeAST *createNodeAssign(NodeAST *id, NodeAST *value);
 NodeAST *createNodeDecl(char *type, NodeAST *id, NodeAST *value);
 
-NodeAST *createNodeFunc(char *type, char *name, NodeAST *body);
+NodeAST *createNodeFunc(char *type, char *name, NodeAST *params, NodeAST *body);
 NodeAST *createNodeCall(char *name, NodeAST *args);
 NodeAST *createNodeReturn(NodeAST *value);
+int checkFunctionCallArgs(char *name, NodeAST *args, char *message, size_t messageSize);
 
 void addChild(NodeAST *parent, NodeAST *child);
 
