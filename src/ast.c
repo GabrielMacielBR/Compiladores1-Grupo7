@@ -137,10 +137,13 @@ NodeAST *createNodeDecl(char *type, NodeAST *id, NodeAST *value) {
     return newNode;
 }
 
-NodeAST *createNodeFunc(char *type, char *name, NodeAST *body) {
+NodeAST *createNodeFunc(char *type, char *name, NodeAST *params, NodeAST *body) {
     NodeAST *newNode = createNode(AST_FUNC);
     strcpy(newNode->op, type);
     strcpy(newNode->name, name);
+
+    if (params)
+        addChild(newNode, params);
 
     if (body)
         addChild(newNode, body);
@@ -169,6 +172,70 @@ NodeAST *createNodeReturn(NodeAST *value) {
         addChild(newNode, value);
 
     return newNode;
+}
+
+static NodeAST *listHead(NodeAST *node) {
+    if (!node) return NULL;
+    if (node->type == AST_SEQ) return node->children[0];
+    return node;
+}
+
+static NodeAST *listTail(NodeAST *node) {
+    if (!node) return NULL;
+    if (node->type == AST_SEQ) return node->children[1];
+    return NULL;
+}
+
+static int compareFunctionArgs(NodeAST *params, NodeAST *args, char *message, size_t messageSize) {
+    if (!params && !args) {
+        return 1;
+    }
+
+    if (!params || !args) {
+        snprintf(message, messageSize, "Erro semântico: quantidade de argumentos incompatível na chamada de função");
+        return 0;
+    }
+
+    NodeAST *paramNode = listHead(params);
+    NodeAST *argNode = listHead(args);
+    NodeAST *nextParams = listTail(params);
+    NodeAST *nextArgs = listTail(args);
+
+    if (!paramNode || paramNode->type != AST_DECL) {
+        snprintf(message, messageSize, "Erro semântico: assinatura de função inválida");
+        return 0;
+    }
+
+    if (!argNode || !argNode->dataType[0]) {
+        snprintf(message, messageSize, "Erro semântico: argumento sem tipo definido na chamada de função");
+        return 0;
+    }
+
+    if (strcmp(paramNode->op, argNode->dataType) != 0) {
+        snprintf(message, messageSize, "Erro semântico: tipo de argumento incompatível na chamada de função; esperado %s, recebido %s", paramNode->op, argNode->dataType);
+        return 0;
+    }
+
+    return compareFunctionArgs(nextParams, nextArgs, message, messageSize);
+}
+
+int checkFunctionCallArgs(char *name, NodeAST *args, char *message, size_t messageSize) {
+    NodeAST *funcAst = getFunctionAst(name);
+    if (!funcAst) {
+        snprintf(message, messageSize, "Erro semântico: função sem assinatura registrada: %s", name);
+        return 0;
+    }
+
+    NodeAST *params = NULL;
+    if (funcAst->child_count > 0) {
+        params = funcAst->children[0];
+    }
+
+    if (!compareFunctionArgs(params, args, message, messageSize)) {
+        return 0;
+    }
+
+    return 1;
 }
 
 
@@ -277,10 +344,17 @@ void printAST(NodeAST *root, int level) {
             printf(")");
             break;
         case AST_FUNC:
-            printf("%s %s() {\n", root->op, root->name);
+            printf("%s %s(", root->op, root->name);
 
             if (root->child_count > 0)
                 printAST(root->children[0], level);
+
+            printf(") {");
+
+            if (root->child_count > 1) {
+                printf("\n");
+                printAST(root->children[1], level);
+            }
 
             printf("\n}");
             break;

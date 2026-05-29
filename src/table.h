@@ -1,6 +1,8 @@
 #ifndef TABLE_H
 #define TABLE_H
 
+typedef struct NodeAST NodeAST;
+
 typedef struct symbol {
     char name[32];
     char type[16];
@@ -8,6 +10,7 @@ typedef struct symbol {
     int line;
     int column;
     int scope;
+    NodeAST *ast;
     struct symbol *next;
 } Symbol;
 
@@ -20,6 +23,8 @@ void popScope();
 
 void insertSymbol(char *name, char *type, int line, int col);
 void insertFunction(char *name, char *returnType, int line, int col);
+void setFunctionAst(char *name, NodeAST *ast);
+NodeAST *getFunctionAst(char *name);
 
 Symbol *searchSymbol(char *name);
 Symbol *searchSymbolInCurrentScope(char *name);
