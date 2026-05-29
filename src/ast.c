@@ -4,7 +4,6 @@
 #include <string.h>
 #include "table.h"
 
-
 NodeAST *createNode(NodeType type) {
     NodeAST *newNode = malloc(sizeof(NodeAST));
     
@@ -25,11 +24,23 @@ NodeAST *createNodeNum(int value) {
     return newNode;
 }
 
+NodeAST *createNodeFloat(float value) {
+    NodeAST *newNode = createNode(AST_FLOAT);
+    newNode->floatValue = value;
+    strcpy(newNode->dataType, "float");
+    return newNode;
+}
+
 NodeAST *createNodeId(char *name) {
     NodeAST *newNode = createNode(AST_ID);
     strcpy(newNode->name, name);
     const char *t = getSymbolType(name);
-    if (t) strcpy(newNode->dataType, t);
+
+    if (t)
+        strcpy(newNode->dataType, t);
+    else
+        strcpy(newNode->dataType, "undefined");
+
     return newNode;
 }
 
@@ -40,12 +51,43 @@ NodeAST *createNodeBinOp(char* op, NodeAST *left, NodeAST *right) {
     addChild(newNode, left);
     addChild(newNode, right);
 
-    if (left && right) {
-        if (strcmp(left->dataType, "float") == 0 || strcmp(right->dataType, "float") == 0) {
-            strcpy(newNode->dataType, "float");
-        } else {
-            strcpy(newNode->dataType, "int");
+    // Operações aritméticas
+    if (strcmp(op, "+") == 0 || strcmp(op, "-") == 0 || strcmp(op, "*") == 0 || strcmp(op, "/") == 0) {
+        if (!isNumeric(left->dataType) || !isNumeric(right->dataType)) {
+            fprintf(stderr, "Erro semântico: operação aritmética inválida\n");
+
+            strcpy(newNode->dataType, "error");
+            return newNode;
         }
+
+        if (strcmp(left->dataType, "float") == 0 || strcmp(right->dataType, "float") == 0)
+            strcpy(newNode->dataType, "float");
+        else
+            strcpy(newNode->dataType, "int");
+    }
+
+    // Operadores relacionais
+    else if (strcmp(op, "<") == 0 || strcmp(op, ">") == 0 || strcmp(op, "<=") == 0
+        || strcmp(op, ">=") == 0 || strcmp(op, "==") == 0 || strcmp(op, "!=") == 0) {
+
+        if (!isNumeric(left->dataType) || !isNumeric(right->dataType)) {
+            fprintf(stderr, "Erro semântico: comparação inválida\n");
+
+            strcpy(newNode->dataType, "error");
+            return newNode;
+        }
+        strcpy(newNode->dataType, "int");
+    }
+
+    // Operadores lógicos 
+    else if (strcmp(op, "&&") == 0 || strcmp(op, "||") == 0) {
+        if (!isBooleanCompatible(left->dataType) || !isBooleanCompatible(right->dataType)) {
+            fprintf(stderr, "Erro semântico: operação lógica inválida\n");
+
+            strcpy(newNode->dataType, "error");
+            return newNode;
+        }
+        strcpy(newNode->dataType, "int");
     }
     return newNode;
 }
@@ -137,6 +179,32 @@ NodeAST *createNodeDecl(char *type, NodeAST *id, NodeAST *value) {
     return newNode;
 }
 
+int isNumeric(char *type) {
+    return strcmp(type, "int") == 0 || strcmp(type, "float") == 0;
+}
+
+int isBooleanCompatible(char *type) {
+    return strcmp(type, "int") == 0;
+}
+
+int isConditionValid(NodeAST *expr) {
+    return strcmp(expr->dataType, "int") == 0;
+}
+
+// Verifica compatibilidade de tipos em atribuições
+int isAssignable(const char *lhs, const char *rhs) {
+    if (strcmp(rhs, "error") == 0)
+        return 0;
+
+    if (strcmp(lhs, rhs) == 0)
+        return 1;
+
+    if (strcmp(lhs, "float") == 0 && strcmp(rhs, "int") == 0)
+        return 1;
+
+    return 0;
+}
+
 void addChild(NodeAST *parent, NodeAST *child) {
     if (!parent || !child)
         return;
@@ -153,6 +221,9 @@ void printAST(NodeAST *root, int level) {
     switch (root->type) {
         case AST_NUM:
             printf("%d", root->value);
+            break;
+        case AST_FLOAT:
+            printf("%f", root->floatValue);
             break;
         case AST_ID:
             printf("%s", root->name);
@@ -251,6 +322,12 @@ void printAST(NodeAST *root, int level) {
             }
 
             printf(")");
+            break;
+        case AST_BREAK:
+            printf("break");
+            break;
+        case AST_CONTINUE:
+            printf("continue");
             break;
         default:
             printf("Unknown");

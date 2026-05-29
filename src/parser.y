@@ -14,6 +14,8 @@ void yyerror(const char *s);
 
 int yydebug = 0;
 NodeAST *root = NULL;
+
+int loopCounter = 0;
 %}
 
 %code requires {
@@ -23,12 +25,14 @@ NodeAST *root = NULL;
 /* UNION para valores semanticos */
 %union {
   int intValue;
+  float floatValue;
   char *id;
   NodeAST *ast;
 }
 
 /* Declaracao de tokens e seus tipos */
 %token <intValue> NUM
+%token <floatValue> FLOAT_NUM
 %token INT FLOAT FUNC RETURN
 %token <id> IDENT
 %token ASSIGN SEMICOLON COMMA
@@ -37,6 +41,7 @@ NodeAST *root = NULL;
 %token EQ NEQ LT GT LEQ GEQ AND OR NOT INCREMENT DECREMENT
 %token WHILE FOR DO
 %token IF ELSE
+%token BREAK CONTINUE
 
 %type <ast> expr declaration assignment statement statements loop conditional body block init_for cond_for step_for
 
@@ -83,6 +88,22 @@ statement:
   | assignment SEMICOLON { $$ = $1; }
   | loop { $$ = $1; }
   | conditional { $$ = $1; }
+  | BREAK SEMICOLON
+      {
+        if (loopCounter <= 0) {
+          yyerror("Erro semântico [L%d:C%d]: break fora de laço");
+          YYABORT;
+        }
+        $$ = createNode(AST_BREAK);
+      }
+  | CONTINUE SEMICOLON
+      {
+        if (loopCounter <= 0) {
+          yyerror("Erro semântico [L%d:C%d]: continue fora de laço");
+          YYABORT;
+        }
+        $$ = createNode(AST_CONTINUE);
+      }
   //| RETURN expr SEMICOLON { printf("INFO: return com valor %d\n", $2); }
   //| RETURN SEMICOLON { printf("INFO: return sem valor\n"); }
   ;
@@ -212,7 +233,7 @@ assignment:
         {
           const char *lhsType = getSymbolType($1);
           const char *rhsType = $3->dataType;
-          if (rhsType && strlen(rhsType) > 0 && lhsType && strcmp(lhsType, rhsType) != 0) {
+          if (rhsType && strlen(rhsType) > 0 && lhsType && !isAssignable(lhsType, rhsType)) {
             char _msg[128];
             snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: incompatibilidade de tipos na atribuição: %s", yyline, yycolumn - (int)strlen($1), $1);
             yyerror(_msg);
@@ -328,6 +349,9 @@ expr:
   | NUM {
         $$ = createNodeNum($1);
     }
+  | FLOAT_NUM {
+      $$ = createNodeFloat($1);
+    }
   | IDENT { 
         if (!searchSymbol($1))
             fprintf(stderr, "Aviso semântico [L%d:C%d]: símbolo não declarado: %s\n", yyline, yycolumn - (int)strlen($1), $1);
@@ -368,30 +392,86 @@ body:
     ;
 
 loop:
-      WHILE LPAREN expr RPAREN body {
-          $$ = createNodeWhile($3, $5);
-          printf("INFO: Laço WHILE detectado\n");
+    WHILE
+      {
+        loopCounter++;
       }
-    | FOR LPAREN { pushScope(); } init_for SEMICOLON cond_for SEMICOLON step_for RPAREN body {
+      LPAREN expr RPAREN body
+        {
+          if (!isConditionValid($4)) {
+            char _msg[128];
+            snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: condição inválida no while: %s", yyline, yycolumn);
+            yyerror(_msg);
+            YYABORT;
+          }
+
+          loopCounter--;
+          $$ = createNodeWhile($4, $6);
+          printf("INFO: Laço WHILE detectado\n");
+        }
+  | FOR LPAREN
+      {
+        pushScope();
+        loopCounter++;
+      }
+      init_for SEMICOLON cond_for SEMICOLON step_for RPAREN body
+        {
+          if ($6 && !isConditionValid($6)) {
+            char _msg[128];
+            snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: condição inválida no for: %s", yyline, yycolumn);
+            yyerror(_msg);
+            YYABORT;
+          }
+
+          loopCounter--;
           $$ = createNodeFor($4, $6, $8, $10);
           popScope();
           printf("INFO: Laço FOR detectado\n");
+        }
+  | DO
+      {
+        loopCounter++;
       }
-    | DO body WHILE LPAREN expr RPAREN SEMICOLON {
-          $$ = createNodeDoWhile($2, $5);
+      body WHILE LPAREN expr RPAREN SEMICOLON
+        {
+          if (!isConditionValid($6)) {
+            char _msg[128];
+            snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: condição inválida no do-while: %s", yyline, yycolumn);
+            yyerror(_msg);
+            YYABORT;
+          }
+
+          loopCounter--;
+          $$ = createNodeDoWhile($3, $6);
           printf("INFO: Laço DO...WHILE detectado\n");
-      }
-    ;
+        }
+  ;
 
 /* Condicionais if-else (resolvem dangling-else) */
 conditional:
-      IF LPAREN expr RPAREN body %prec LOWER_THAN_ELSE {
-          $$ = createNodeIf($3, $5, NULL);
-          printf("SUCESSO: Declaração if realizada.\n");
+    IF LPAREN expr RPAREN body %prec LOWER_THAN_ELSE
+      {
+        if (!isConditionValid($3)) {
+          char _msg[128];
+          snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: condição inválida no if: %s", yyline, yycolumn);
+          yyerror(_msg);
+          YYABORT;
+        }
+        
+        $$ = createNodeIf($3, $5, NULL);
+        printf("SUCESSO: Declaração if realizada.\n");
       }
-    | IF LPAREN expr RPAREN body ELSE body {
-          $$ = createNodeIf($3, $5, $7);
-          printf("SUCESSO: Declaração if-else realizada.\n");
+  | IF LPAREN expr RPAREN body ELSE body
+      {
+        if (!isConditionValid($3)) {
+          char _msg[128];
+          snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: condição inválida no if: %s", yyline, yycolumn);
+          yyerror(_msg);
+          YYABORT;
+        }
+
+        $$ = createNodeIf($3, $5, $7);
+        printf("SUCESSO: Declaração if-else realizada.\n");
       }
     | expr QUESTION body COLON body {
           $$ = createNodeIf($1, $3, $5);
@@ -431,17 +511,17 @@ arg_list:
 %%
 
 int main(void) {
-    printf("Digite expressoes terminadas com ';'. Pressione Ctrl+D para encerrar.\n");
-      initTable();
-      int ret = yyparse();
-      freeTable();
-      return ret;
+  printf("Digite expressoes terminadas com ';'. Pressione Ctrl+D para encerrar.\n");
+  initTable();
+  int ret = yyparse();
+  freeTable();
+  return ret;
 }
 
 void yyerror(const char *s) {
-    if (strncmp(s, "Erro semântico", 14) == 0) {
-        fprintf(stderr, "%s\n", s);
-    } else {
-        fprintf(stderr, "Erro sintático [L%d:C%d]: %s\n", yyline, yycolumn, s);
-    }
+  if (strncmp(s, "Erro semântico", 14) == 0) {
+    fprintf(stderr, "%s\n", s);
+  } else {
+    fprintf(stderr, "Erro sintático [L%d:C%d]: %s\n", yyline, yycolumn, s);
+  }
 }

@@ -6,6 +6,7 @@
 NodeAST *createNode(NodeType type);
 
 NodeAST *createNodeNum(int value);
+NodeAST *createNodeFloat(float value);
 NodeAST *createNodeId(char *name);
 NodeAST *createNodeBinOp(char* op, NodeAST *left, NodeAST *right);
 NodeAST *createNodeUnOp(char* op, NodeAST *left);
@@ -19,8 +20,12 @@ NodeAST *createNodeDoWhile(NodeAST *body, NodeAST *cond);
 NodeAST *createNodeAssign(NodeAST *id, NodeAST *value);
 NodeAST *createNodeDecl(char *type, NodeAST *id, NodeAST *value);
 
-void addChild(NodeAST *parent, NodeAST *child);
+int isNumeric(char *type);
+int isBooleanCompatible(char *type);
+int isConditionValid(NodeAST *expr);
+int isAssignable(const char *lhs, const char *rhs);
 
+void addChild(NodeAST *parent, NodeAST *child);
 void printAST(NodeAST *root, int level);
 
 #endif

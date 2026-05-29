@@ -22,11 +22,11 @@ int yycolumn = 1;
 %%
 
 auto        { /* return AUTO; */ }
-break       { /* return BREAK; */ }
+break       { return BREAK; }
 case        { /* return CASE; */ }
 char        { /* return CHAR; */ }
 const       { /* return CONST; */ }
-continue    { /* return CONTINUE; */ }
+continue    { return CONTINUE; }
 default     { /* return DEFAULT; */ }
 do          { return DO; }
 double      { /* return DOUBLE; */ }
@@ -97,6 +97,11 @@ while       { return WHILE; }
 \"([^\"\n]*)\" { /* return STRING; */ }
 
 [a-zA-Z_][a-zA-Z0-9_]*  { yylval.id = strdup(yytext); return IDENT; }
+
+[0-9]+"."[0-9]+ {
+    yylval.floatValue = atof(yytext);
+    return FLOAT_NUM;
+}
 
 [0-9]+  { yylval.intValue = atoi(yytext); return NUM; } 
 
