@@ -7,6 +7,7 @@
 NodeAST *createNode(NodeType type);
 
 NodeAST *createNodeNum(int value);
+NodeAST *createNodeFloat(float value);
 NodeAST *createNodeId(char *name);
 NodeAST *createNodeBinOp(char* op, NodeAST *left, NodeAST *right);
 NodeAST *createNodeUnOp(char* op, NodeAST *left);
@@ -20,13 +21,20 @@ NodeAST *createNodeDoWhile(NodeAST *body, NodeAST *cond);
 NodeAST *createNodeAssign(NodeAST *id, NodeAST *value);
 NodeAST *createNodeDecl(char *type, NodeAST *id, NodeAST *value);
 
+int isNumeric(char *type);
+int isBooleanCompatible(char *type);
+int isConditionValid(NodeAST *expr);
+int isAssignable(const char *lhs, const char *rhs);
+
 NodeAST *createNodeFunc(char *type, char *name, NodeAST *params, NodeAST *body);
 NodeAST *createNodeCall(char *name, NodeAST *args);
 NodeAST *createNodeReturn(NodeAST *value);
+
 int checkFunctionCallArgs(char *name, NodeAST *args, char *message, size_t messageSize);
 
 void addChild(NodeAST *parent, NodeAST *child);
 
+void addChild(NodeAST *parent, NodeAST *child);
 void printAST(NodeAST *root, int level);
 
 #endif
