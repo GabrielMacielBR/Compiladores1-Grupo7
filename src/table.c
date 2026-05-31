@@ -84,11 +84,13 @@ void insertSymbol(char *name, char *type, int line, int col) {
     new->line = line;
     new->column = col;
     new->scope = current_scope;
+    new->ast = NULL;
+    new->param_count = 0;
     new->next = table[h];
     table[h] = new;
 }
 
-void insertFunction(char *name, char *returnType, int line, int col) {
+void insertFunction(char *name, char *returnType, int param_count, int line, int col) {
     unsigned long h = hash(name) % TABLE_SIZE;
 
     for (Symbol *s = table[h]; s; s = s->next) {
@@ -108,6 +110,7 @@ void insertFunction(char *name, char *returnType, int line, int col) {
     strncpy(new->kind, "func", sizeof(new->kind)-1);
     new->kind[sizeof(new->kind)-1] = '\0';
 
+    new->param_count = param_count;
     new->line = line;
     new->column = col;
     new->scope = 0;
@@ -169,6 +172,8 @@ void printTable() {
     printf("\nTabela de Símbolos (hash):\n");
     for (int i = 0; i < TABLE_SIZE; ++i) {
         for (Symbol *s = table[i]; s; s = s->next)
-            printf("Nome: %s, Tipo: %s, Kind: %s, Scope: %d, Decl: L%d:C%d\n", s->name, s->type, s->kind, s->scope, s->line, s->column);
+            printf("Nome: %s, Tipo: %s, Kind: %s, Params: %d, Scope: %d, Decl: L%d:C%d\n",
+                   s->name, s->type, s->kind, s->param_count, s->scope, s->line, s->column);
     }
 }
+

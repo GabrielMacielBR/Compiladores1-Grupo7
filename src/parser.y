@@ -11,11 +11,10 @@ extern int yycolumn;
 /* Prototipos para evitar avisos de funcao implicita */
 int yylex(void);
 void yyerror(const char *s);
+int countArguments(NodeAST *args);
 
 int yydebug = 0;
 NodeAST *root = NULL;
-static const char *current_function_return_type = NULL;
-static int current_function_has_return = 0;
 %}
 
 %code requires {
@@ -42,8 +41,8 @@ static int current_function_has_return = 0;
 
 %type <ast> expr declaration assignment statement statements loop conditional body block init_for cond_for step_for
 %type <ast> function_definition function_block function_call return_statement arg_list_opt arg_list
-%type <ast> parameter_list_opt parameter_list parameter
 %type <id> type_specifier
+%type <intValue> parameter_list_opt parameter_list parameter
 
 /* Regras de precedencia e associatividade */
 %left OR
@@ -85,7 +84,7 @@ input:
             printTable();
         }
     }
-    | input error SEMICOLON { 
+    | input error SEMICOLON {
       fprintf(stderr, "[ERRO SINTATICO] Erro recuperado ate ';'\n");
       yyerrok; /* reset de erro */
       yyclearin; /* limpamos o token de lookahead */
@@ -298,7 +297,7 @@ expr:
         $$ = createNodeBinOp("||", $1, $3);
     }
   | expr AND expr {
-        $$ = createNodeBinOp("&&", $1, $3); 
+        $$ = createNodeBinOp("&&", $1, $3);
     }
   | expr EQ expr {
         $$ = createNodeBinOp("==", $1, $3);
@@ -345,15 +344,14 @@ expr:
   | function_call {
         $$ = $1;
     }
-  | IDENT { 
+  | IDENT {
         if (!searchSymbol($1))
             fprintf(stderr, "Aviso semântico [L%d:C%d]: símbolo não declarado: %s\n", yyline, yycolumn - (int)strlen($1), $1);
         $$ = createNodeId($1);
     }
   ;
 
-
-block: 
+block:
     LBRACE { pushScope(); } statements RBRACE {
         $$ = $3;
         popScope();
@@ -362,7 +360,6 @@ block:
     ;
 
 /* Laços WHILE e FOR e DO...WHILE */
-
 init_for:
       declaration { $$ = $1; }
     | assignment { $$ = $1; }
@@ -432,20 +429,16 @@ function_definition:
         YYABORT;
       }
 
-      insertFunction($2, "int", yyline, yycolumn - (int)strlen($2) - 1);
-      current_function_return_type = "int";
-      current_function_has_return = 0;
       pushScope();
     }
-    parameter_list_opt RPAREN function_block
+    parameter_list_opt RPAREN
     {
-      $$ = createNodeFunc("int", $2, $5, $7);
-      setFunctionAst($2, $$);
+      insertFunction($2, "int", $5, yyline, yycolumn - (int)strlen($2) - 1);
+    }
+    function_block
+    {
+      $$ = createNodeFunc("int", $2, NULL, $8);
       popScope();
-      if (!current_function_has_return) {
-        fprintf(stderr, "Aviso semântico [L%d:C%d]: função '%s' não possui return\n", yyline, yycolumn, $2);
-      }
-      current_function_return_type = NULL;
       printf("INFO: Função definida: %s\n", $2);
     }
   | FLOAT IDENT LPAREN
@@ -457,20 +450,16 @@ function_definition:
         YYABORT;
       }
 
-      insertFunction($2, "float", yyline, yycolumn - (int)strlen($2) - 1);
-      current_function_return_type = "float";
-      current_function_has_return = 0;
       pushScope();
     }
-    parameter_list_opt RPAREN function_block
+    parameter_list_opt RPAREN
     {
-      $$ = createNodeFunc("float", $2, $5, $7);
-      setFunctionAst($2, $$);
+      insertFunction($2, "float", $5, yyline, yycolumn - (int)strlen($2) - 1);
+    }
+    function_block
+    {
+      $$ = createNodeFunc("float", $2, NULL, $8);
       popScope();
-      if (!current_function_has_return) {
-        fprintf(stderr, "Aviso semântico [L%d:C%d]: função '%s' não possui return\n", yyline, yycolumn, $2);
-      }
-      current_function_return_type = NULL;
       printf("INFO: Função definida: %s\n", $2);
     }
     ;
@@ -484,13 +473,13 @@ function_block:
     ;
 
 parameter_list_opt:
-      /* vazio */ { $$ = NULL; }
+      /* vazio */ { $$ = 0; }
     | parameter_list { $$ = $1; }
     ;
 
 parameter_list:
       parameter { $$ = $1; }
-    | parameter_list COMMA parameter { $$ = createNodeSeq($1, $3); }
+    | parameter_list COMMA parameter { $$ = $1 + $3; }
     ;
 
 parameter:
@@ -502,29 +491,32 @@ parameter:
           insertSymbol($2, $1, yyline, yycolumn - (int)strlen($2));
         }
 
-        $$ = createNodeDecl($1, createNodeId($2), NULL);
         printf("INFO: Parametro: %s\n", $2);
+        $$ = 1;
       }
     ;
 
 function_call:
-    IDENT
+    IDENT LPAREN arg_list_opt RPAREN
     {
-      if (!searchFunction($1)) {
+      Symbol *func = searchFunction($1);
+
+      if (!func) {
         char _msg[128];
         snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: função não declarada: %s", yyline, yycolumn - (int)strlen($1), $1);
         yyerror(_msg);
         YYABORT;
       }
-    }
-    LPAREN arg_list_opt RPAREN
-    {
-      char _msg[160];
-      if (!checkFunctionCallArgs($1, $4, _msg, sizeof(_msg))) {
+
+      int arg_count = countArguments($3);
+      if (arg_count != func->param_count) {
+        char _msg[160];
+        snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: quantidade de argumentos incompatível na chamada de função: %s", yyline, yycolumn - (int)strlen($1), $1);
         yyerror(_msg);
         YYABORT;
       }
-      $$ = createNodeCall($1, $4);
+
+      $$ = createNodeCall($1, $3);
     }
     ;
 
@@ -539,22 +531,21 @@ arg_list:
     ;
 
 return_statement:
-      RETURN expr {
-        if (current_function_return_type && $2 && strlen($2->dataType) > 0 && strcmp(current_function_return_type, $2->dataType) != 0) {
-          char _msg[160];
-          snprintf(_msg, sizeof(_msg), "Aviso semântico [L%d:C%d]: tipo de retorno incompatível, esperado %s", yyline, yycolumn, current_function_return_type);
-          fprintf(stderr, "%s\n", _msg);
-        }
-        current_function_has_return = 1;
-        $$ = createNodeReturn($2);
-      }
-    | RETURN {
-        current_function_has_return = 1;
-        $$ = createNodeReturn(NULL);
-      }
+      RETURN expr { $$ = createNodeReturn($2); }
+    | RETURN { $$ = createNodeReturn(NULL); }
     ;
 
 %%
+
+int countArguments(NodeAST *args) {
+    if (!args)
+        return 0;
+
+    if (args->type == AST_SEQ)
+        return countArguments(args->children[0]) + countArguments(args->children[1]);
+
+    return 1;
+}
 
 int main(void) {
     printf("Digite expressoes terminadas com ';'. Pressione Ctrl+D para encerrar.\n");
