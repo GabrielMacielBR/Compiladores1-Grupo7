@@ -3,17 +3,30 @@
 #include <stdlib.h>
 #include <string.h>
 #include "parser.tab.h"  /* contém definições geradas pelo Bison (NUM, PLUS, etc.) */
+
+int yyline = 1;
+int yycolumn = 1;
+
+#define YY_USER_ACTION \
+    for (int i = 0; yytext[i] != '\0'; i++) { \
+        if (yytext[i] == '\n') { \
+            yyline++; \
+            yycolumn = 1; \
+        } else { \
+            yycolumn++; \
+        } \
+    }
 %}
 
 /* Definições de padrões de token e ações */
 %%
 
 auto        { /* return AUTO; */ }
-break       { /* return BREAK; */ }
+break       { return BREAK; }
 case        { /* return CASE; */ }
 char        { /* return CHAR; */ }
 const       { /* return CONST; */ }
-continue    { /* return CONTINUE; */ }
+continue    { return CONTINUE; }
 default     { /* return DEFAULT; */ }
 do          { return DO; }
 double      { /* return DOUBLE; */ }
@@ -41,7 +54,7 @@ void        { /* return VOID; */ }
 volatile    { /* return VOLATILE; */ }
 while       { return WHILE; }
 
-[ \t\n]+    { /* ignora espaços, tabs e quebras de linha */ }
+[ \t\r\n]+    { /* ignora espaços, tabs e quebras de linha */ }
 
 "//".*     { /* Ignorar comentários de linha */ }
 "/*"([^*]|\*+[^*/])*\*+\/    { /* Ignorar comentários de bloco */ }
@@ -84,6 +97,11 @@ while       { return WHILE; }
 \"([^\"\n]*)\" { /* return STRING; */ }
 
 [a-zA-Z_][a-zA-Z0-9_]*  { yylval.id = strdup(yytext); return IDENT; }
+
+[0-9]+"."[0-9]+ {
+    yylval.floatValue = atof(yytext);
+    return FLOAT_NUM;
+}
 
 [0-9]+  { yylval.intValue = atoi(yytext); return NUM; } 
 

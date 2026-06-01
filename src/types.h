@@ -5,6 +5,7 @@
 
 typedef enum {
     AST_NUM,
+    AST_FLOAT,
     AST_ID,
     AST_BINOP,
     AST_UNOP,
@@ -18,15 +19,19 @@ typedef enum {
     AST_FOR,
     AST_FUNC,
     AST_RETURN,
-    AST_CALL
+    AST_CALL,
+    AST_BREAK,
+    AST_CONTINUE
 } NodeType;
 
 typedef struct NodeAST {
     NodeType type;
-    char op[3];        // ex: "+", "==", "++"
+    char op[16];        // ex: "+", "==", "int", "float"
     int value;         // Para AST_NUM
+    float floatValue;  // Para AST_FLOAT
     char name[32];     // Para AST_ID e nome de funções
-    
+    char dataType[16]; // Synthesis bottom-up type: "int", "float", etc
+
     struct NodeAST *children[MAX_CHILDREN];
     int child_count;
 } NodeAST;

@@ -1,13 +1,13 @@
-# Sprint 7
+# Sprint 8
 
-**Período:** 24/05 a 10/05  
+**Período:** 11/05 a 17/05  
 **Status:** ✅ Concluída  
 
 ## Objetivo
 Implementar a geração da Abstract Syntax Tree (AST) e da Tabela de Símbolos para as estruturas já suportadas pelo analisador sintático. Além de iniciar o estudo sobre a etapa de geração de código intermediário.
 
 ## Atividades / Issues
-- [ ] Implementar Abstract Syntax Tree e Tabela de Símbolos.
+- [x] Implementar Abstract Syntax Tree e Tabela de Símbolos.
 - [x] Estudo sobre geração de código intermediário e entrega da atividade proposta pelo professor via Teams.
 
 ## Resultados

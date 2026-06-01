@@ -17,4 +17,46 @@ A proposta do projeto é receber programas escritos em um subconjunto da linguag
 
 # Equipe
 
-Conheça o grupo deste projeto: 
+Conheça o grupo deste projeto:
+
+<div class="team-grid">
+	<article class="team-card">
+		<img src="https://github.com/libruna.png?size=160" alt="Foto de perfil GitHub de Bruna Lima" loading="lazy">
+		<div>
+			<h3>Bruna Lima</h3>
+			<p><strong>GitHub:</strong> <a href="https://github.com/libruna">@libruna</a></p>
+		</div>
+	</article>
+
+	<article class="team-card">
+		<img src="https://github.com/CauaNicolas.png?size=160" alt="Foto de perfil GitHub de Caua Nicolas" loading="lazy">
+		<div>
+			<h3>Caua Nicolas</h3>
+			<p><strong>GitHub:</strong> <a href="https://github.com/CauaNicolas">@CauaNicolas</a></p>
+		</div>
+	</article>
+
+	<article class="team-card">
+		<img src="https://github.com/Diaxiz.png?size=160" alt="Foto de perfil GitHub de Diassis" loading="lazy">
+		<div>
+			<h3>Diassis</h3>
+			<p><strong>GitHub:</strong> <a href="https://github.com/Diaxiz">@Diaxiz</a></p>
+		</div>
+	</article>
+
+	<article class="team-card">
+		<img src="https://github.com/GabrielMacielBR.png?size=160" alt="Foto de perfil GitHub de Gabriel Maciel" loading="lazy">
+		<div>
+			<h3>Gabriel Maciel</h3>
+			<p><strong>GitHub:</strong> <a href="https://github.com/GabrielMacielBR">@GabrielMacielBR</a></p>
+		</div>
+	</article>
+
+	<article class="team-card">
+		<img src="https://github.com/IsaqueSH.png?size=160" alt="Foto de perfil GitHub de Isaque Santos" loading="lazy">
+		<div>
+			<h3>Isaque Santos</h3>
+			<p><strong>GitHub:</strong> <a href="https://github.com/IsaqueSH">@IsaqueSH</a></p>
+		</div>
+	</article>
+</div>
