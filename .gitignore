@@ -20,3 +20,6 @@ my_compiler
 # Other files
 input.txt
 /site
+
+# Generated parser executable/file
+src/parser

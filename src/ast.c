@@ -2,22 +2,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "table.h"
 
 NodeAST *createNode(NodeType type) {
+
     NodeAST *newNode = malloc(sizeof(NodeAST));
-    
+
     newNode->type = type;
     newNode->child_count = 0;
     memset(newNode->dataType, 0, sizeof(newNode->dataType));
 
-    for (int i = 0; i < MAX_CHILDREN; i++) {
+    for (int i = 0; i < MAX_CHILDREN; i++)
+    {
         newNode->children[i] = NULL;
     }
     return newNode;
 }
 
-NodeAST *createNodeNum(int value) {
+NodeAST *createNodeNum(int value)
+{
     NodeAST *newNode = createNode(AST_NUM);
     newNode->value = value;
     strcpy(newNode->dataType, "int");
@@ -31,7 +35,8 @@ NodeAST *createNodeFloat(float value) {
     return newNode;
 }
 
-NodeAST *createNodeId(char *name) {
+NodeAST *createNodeId(char *name)
+{
     NodeAST *newNode = createNode(AST_ID);
     strcpy(newNode->name, name);
     const char *t = getSymbolType(name);
@@ -44,7 +49,8 @@ NodeAST *createNodeId(char *name) {
     return newNode;
 }
 
-NodeAST *createNodeBinOp(char* op, NodeAST *left, NodeAST *right) {
+NodeAST *createNodeBinOp(char *op, NodeAST *left, NodeAST *right)
+{
     NodeAST *newNode = createNode(AST_BINOP);
     strcpy(newNode->op, op);
 
@@ -92,7 +98,8 @@ NodeAST *createNodeBinOp(char* op, NodeAST *left, NodeAST *right) {
     return newNode;
 }
 
-NodeAST *createNodeUnOp(char* op, NodeAST *left) {
+NodeAST *createNodeUnOp(char *op, NodeAST *left)
+{
     NodeAST *newNode = createNode(AST_UNOP);
     strcpy(newNode->op, op);
 
@@ -105,8 +112,9 @@ NodeAST *createNodeUnOp(char* op, NodeAST *left) {
     return newNode;
 }
 
-NodeAST *createNodeSeq(NodeAST *first, NodeAST *second) {
-   if (!first)
+NodeAST *createNodeSeq(NodeAST *first, NodeAST *second)
+{
+    if (!first)
         return second;
 
     NodeAST *newNode = createNode(AST_SEQ);
@@ -117,7 +125,8 @@ NodeAST *createNodeSeq(NodeAST *first, NodeAST *second) {
     return newNode;
 }
 
-NodeAST *createNodeIf(NodeAST *cond, NodeAST *if_body, NodeAST *else_body) {
+NodeAST *createNodeIf(NodeAST *cond, NodeAST *if_body, NodeAST *else_body)
+{
     NodeAST *newNode = createNode(AST_IF);
 
     addChild(newNode, cond);
@@ -129,7 +138,8 @@ NodeAST *createNodeIf(NodeAST *cond, NodeAST *if_body, NodeAST *else_body) {
     return newNode;
 }
 
-NodeAST *createNodeFor(NodeAST *init, NodeAST *cond, NodeAST *step, NodeAST *body) {
+NodeAST *createNodeFor(NodeAST *init, NodeAST *cond, NodeAST *step, NodeAST *body)
+{
     NodeAST *newNode = createNode(AST_FOR);
 
     addChild(newNode, init);
@@ -140,7 +150,8 @@ NodeAST *createNodeFor(NodeAST *init, NodeAST *cond, NodeAST *step, NodeAST *bod
     return newNode;
 }
 
-NodeAST *createNodeWhile(NodeAST *cond, NodeAST *body) {
+NodeAST *createNodeWhile(NodeAST *cond, NodeAST *body)
+{
     NodeAST *newNode = createNode(AST_WHILE);
 
     addChild(newNode, cond);
@@ -149,7 +160,8 @@ NodeAST *createNodeWhile(NodeAST *cond, NodeAST *body) {
     return newNode;
 }
 
-NodeAST *createNodeDoWhile(NodeAST *body, NodeAST *cond) {
+NodeAST *createNodeDoWhile(NodeAST *body, NodeAST *cond)
+{
     NodeAST *newNode = createNode(AST_DO_WHILE);
 
     addChild(newNode, body);
@@ -158,7 +170,8 @@ NodeAST *createNodeDoWhile(NodeAST *body, NodeAST *cond) {
     return newNode;
 }
 
-NodeAST *createNodeAssign(NodeAST *id, NodeAST *value) {
+NodeAST *createNodeAssign(NodeAST *id, NodeAST *value)
+{
     NodeAST *newNode = createNode(AST_ASSIGN);
 
     addChild(newNode, id);
@@ -167,7 +180,8 @@ NodeAST *createNodeAssign(NodeAST *id, NodeAST *value) {
     return newNode;
 }
 
-NodeAST *createNodeDecl(char *type, NodeAST *id, NodeAST *value) {
+NodeAST *createNodeDecl(char *type, NodeAST *id, NodeAST *value)
+{
     NodeAST *newNode = createNode(AST_DECL);
     strcpy(newNode->op, type);
 
@@ -191,7 +205,6 @@ int isConditionValid(NodeAST *expr) {
     return strcmp(expr->dataType, "int") == 0;
 }
 
-// Verifica compatibilidade de tipos em atribuições
 int isAssignable(const char *lhs, const char *rhs) {
     if (strcmp(rhs, "error") == 0)
         return 0;
@@ -205,10 +218,14 @@ int isAssignable(const char *lhs, const char *rhs) {
     return 0;
 }
 
-NodeAST *createNodeFunc(char *type, char *name, NodeAST *params, NodeAST *body) {
+NodeAST *createNodeFunc(char *name, char *ret_type,
+                        NodeAST *params,
+                        NodeAST *body)
+{
     NodeAST *newNode = createNode(AST_FUNC);
-    strcpy(newNode->op, type);
+
     strcpy(newNode->name, name);
+    strcpy(newNode->op, ret_type);
 
     if (params)
         addChild(newNode, params);
@@ -219,8 +236,10 @@ NodeAST *createNodeFunc(char *type, char *name, NodeAST *params, NodeAST *body) 
     return newNode;
 }
 
-NodeAST *createNodeCall(char *name, NodeAST *args) {
+NodeAST *createNodeCall(char *name, NodeAST *args)
+{
     NodeAST *newNode = createNode(AST_CALL);
+
     strcpy(newNode->name, name);
 
     Symbol *func = searchFunction(name);
@@ -233,7 +252,8 @@ NodeAST *createNodeCall(char *name, NodeAST *args) {
     return newNode;
 }
 
-NodeAST *createNodeReturn(NodeAST *value) {
+NodeAST *createNodeReturn(NodeAST *value)
+{
     NodeAST *newNode = createNode(AST_RETURN);
 
     if (value)
@@ -242,226 +262,279 @@ NodeAST *createNodeReturn(NodeAST *value) {
     return newNode;
 }
 
-static NodeAST *listHead(NodeAST *node) {
-    if (!node) return NULL;
-    if (node->type == AST_SEQ) return node->children[0];
+static NodeAST *listHead(NodeAST *node)
+{
+    if (!node)
+        return NULL;
+
+    if (node->type == AST_SEQ)
+        return node->children[0];
+
     return node;
 }
 
-static NodeAST *listTail(NodeAST *node) {
-    if (!node) return NULL;
-    if (node->type == AST_SEQ) return node->children[1];
+static NodeAST *listTail(NodeAST *node)
+{
+    if (!node)
+        return NULL;
+
+    if (node->type == AST_SEQ)
+        return node->children[1];
+
     return NULL;
 }
 
-static int compareFunctionArgs(NodeAST *params, NodeAST *args, char *message, size_t messageSize) {
-    if (!params && !args) {
+static int compareFunctionArgs(NodeAST *params,
+                               NodeAST *args,
+                               char *message,
+                               size_t messageSize)
+{
+    if (!params && !args)
         return 1;
-    }
 
-    if (!params || !args) {
-        snprintf(message, messageSize, "Erro semântico: quantidade de argumentos incompatível na chamada de função");
+    if (!params || !args)
+    {
+        snprintf(message, messageSize,
+                 "Erro semântico: quantidade de argumentos incompatível na chamada de função");
         return 0;
     }
 
     NodeAST *paramNode = listHead(params);
     NodeAST *argNode = listHead(args);
+
     NodeAST *nextParams = listTail(params);
     NodeAST *nextArgs = listTail(args);
 
-    if (!paramNode || paramNode->type != AST_DECL) {
-        snprintf(message, messageSize, "Erro semântico: assinatura de função inválida");
+    if (!paramNode || paramNode->type != AST_DECL)
+    {
+        snprintf(message, messageSize,
+                 "Erro semântico: assinatura de função inválida");
         return 0;
     }
 
-    if (!argNode || !argNode->dataType[0]) {
-        snprintf(message, messageSize, "Erro semântico: argumento sem tipo definido na chamada de função");
+    if (!argNode || !argNode->dataType[0])
+    {
+        snprintf(message, messageSize,
+                 "Erro semântico: argumento sem tipo definido na chamada de função");
         return 0;
     }
 
-    if (strcmp(paramNode->op, argNode->dataType) != 0) {
-        snprintf(message, messageSize, "Erro semântico: tipo de argumento incompatível na chamada de função; esperado %s, recebido %s", paramNode->op, argNode->dataType);
+    if (strcmp(paramNode->op, argNode->dataType) != 0)
+    {
+        snprintf(message, messageSize,
+                 "Erro semântico: tipo de argumento incompatível na chamada de função; esperado %s, recebido %s",
+                 paramNode->op,
+                 argNode->dataType);
         return 0;
     }
 
-    return compareFunctionArgs(nextParams, nextArgs, message, messageSize);
+    return compareFunctionArgs(nextParams,
+                               nextArgs,
+                               message,
+                               messageSize);
 }
 
-int checkFunctionCallArgs(char *name, NodeAST *args, char *message, size_t messageSize) {
+int checkFunctionCallArgs(char *name,
+                          NodeAST *args,
+                          char *message,
+                          size_t messageSize)
+{
     NodeAST *funcAst = getFunctionAst(name);
-    if (!funcAst) {
-        snprintf(message, messageSize, "Erro semântico: função sem assinatura registrada: %s", name);
+
+    if (!funcAst)
+    {
+        snprintf(message,
+                 messageSize,
+                 "Erro semântico: função sem assinatura registrada: %s",
+                 name);
         return 0;
     }
 
     NodeAST *params = NULL;
-    if (funcAst->child_count > 0) {
-        params = funcAst->children[0];
-    }
 
-    if (!compareFunctionArgs(params, args, message, messageSize)) {
+    if (funcAst->child_count > 0)
+        params = funcAst->children[0];
+
+    if (!compareFunctionArgs(params, args,
+                             message, messageSize))
         return 0;
-    }
 
     return 1;
 }
 
-
-void addChild(NodeAST *parent, NodeAST *child) {
+void addChild(NodeAST *parent, NodeAST *child)
+{
     if (!parent || !child)
         return;
 
-    if (parent->child_count < MAX_CHILDREN) {
+    if (parent->child_count < MAX_CHILDREN)
+    {
         parent->children[parent->child_count++] = child;
     }
 }
 
-void printAST(NodeAST *root, int level) {
+void printAST(NodeAST *root, int level)
+{
     if (!root)
         return;
 
-    switch (root->type) {
-        case AST_NUM:
-            printf("%d", root->value);
-            break;
-        case AST_FLOAT:
-            printf("%f", root->floatValue);
-            break;
-        case AST_ID:
-            printf("%s", root->name);
-            break;
-        case AST_BINOP:
-            printf("(");
-            printAST(root->children[0], level);
-            printf(" %s ", root->op);
-            printAST(root->children[1], level);
-            printf(")");
-            break;
-        case AST_UNOP:
-            printf("(%s", root->op);
-            printAST(root->children[0], level);
-            printf(")");
-            break;
-        case AST_SEQ:
-            printAST(root->children[0], level);
+switch (root->type)
+{
+    case AST_NUM:
+        printf("%d", root->value);
+        break;
 
-            if (root->children[0] &&
-                root->children[0]->type != AST_IF &&
-                root->children[0]->type != AST_WHILE &&
-                root->children[0]->type != AST_DO_WHILE &&
-                root->children[0]->type != AST_FOR) {
-                printf(";\n");
-            } else {
-                printf("\n");
-            }
+    case AST_FLOAT:
+        printf("%f", root->floatValue);
+        break;
 
-            printAST(root->children[1], level);
-            break;
-        case AST_IF:
-            printf("if (");
-            printAST(root->children[0], level);
-            printf(") {\n");
-            printAST(root->children[1], level);
+    case AST_ID:
+        printf("%s", root->name);
+        break;
+
+    case AST_BINOP:
+        printf("(");
+        printAST(root->children[0], level);
+        printf(" %s ", root->op);
+        printAST(root->children[1], level);
+        printf(")");
+        break;
+
+    case AST_UNOP:
+        printf("(%s", root->op);
+        printAST(root->children[0], level);
+        printf(")");
+        break;
+
+    case AST_SEQ:
+        printAST(root->children[0], level);
+
+        if (root->children[0] &&
+            root->children[0]->type != AST_IF &&
+            root->children[0]->type != AST_WHILE &&
+            root->children[0]->type != AST_DO_WHILE &&
+            root->children[0]->type != AST_FOR)
+        {
+            printf(";\n");
+        }
+        else
+        {
+            printf("\n");
+        }
+
+        printAST(root->children[1], level);
+        break;
+    case AST_IF:
+        printf("if (");
+        printAST(root->children[0], level);
+        printf(") {\n");
+        printAST(root->children[1], level);
+        printf("\n}");
+
+        if (root->child_count == 3)
+        {
+            printf(" else {\n");
+            printAST(root->children[2], level);
             printf("\n}");
-
-            if (root->child_count == 3) {
-                printf(" else {\n");
-                printAST(root->children[2], level);
-                printf("\n}");
-            }
-            break;
-        case AST_WHILE:
-            printf("while (");
+        }
+        break;
+    case AST_FUNC:
+        printf("func %s() -> %s {\n", root->name, root->op);
+        if (root->child_count >= 1 && root->children[0])
+        {
             printAST(root->children[0], level);
-            printf(") {\n");
+            printf("\n");
+        }
+        if (root->child_count >= 2 && root->children[1])
+        {
             printAST(root->children[1], level);
-            printf("\n}");
-            break;
-        case AST_DO_WHILE:
-            printf("do {\n ");
+            printf("\n");
+        }
+        printf("}\n");
+        break;
+    case AST_RETURN:
+        printf("return");
+        if (root->child_count == 1)
+        {
+            printf(" ");
             printAST(root->children[0], level);
-            printf("\n} while (");
+        }
+        printf(";\n");
+        break;
+    case AST_WHILE:
+        printf("while (");
+        printAST(root->children[0], level);
+        printf(") {\n");
+        printAST(root->children[1], level);
+        printf("\n}");
+        break;
+    case AST_DO_WHILE:
+        printf("do {\n ");
+        printAST(root->children[0], level);
+        printf("\n} while (");
+        printAST(root->children[1], level);
+        printf(")");
+        break;
+    case AST_FOR:
+        printf("for (");
+
+        if (root->children[0])
+            printAST(root->children[0], level);
+
+        printf("; ");
+
+        if (root->children[1])
             printAST(root->children[1], level);
-            printf(")");
-            break;
-        case AST_FOR:
-            printf("for (");
 
-            if (root->children[0])
-                printAST(root->children[0], level);
+        printf("; ");
 
-            printf("; ");
+        if (root->children[2])
+            printAST(root->children[2], level);
 
-            if (root->children[1])
-                printAST(root->children[1], level);
+        printf(") {\n");
 
-            printf("; ");
+        if (root->children[3])
+            printAST(root->children[3], level);
 
-            if (root->children[2])
-                printAST(root->children[2], level);
+        printf("\n}");
+        break;
+    case AST_ASSIGN:
+        printf("(ASSIGN ");
+        printAST(root->children[0], level);
+        printf(" = ");
+        printAST(root->children[1], level);
+        printf(")");
+        break;
+    case AST_DECL:
+        printf("(DECL %s ", root->op);
+        printAST(root->children[0], level);
 
-            printf(") {\n");
-
-            if (root->children[3])
-                printAST(root->children[3], level);
-
-            printf("\n}");
-            break;
-        case AST_ASSIGN:
-            printf("(ASSIGN ");
-            printAST(root->children[0], level);
+        if (root->child_count == 2)
+        {
             printf(" = ");
             printAST(root->children[1], level);
-            printf(")");
-            break;
-        case AST_FUNC:
-            printf("%s %s(", root->op, root->name);
+        }
 
-            if (root->child_count > 0)
-                printAST(root->children[0], level);
+        printf(")");
+        break;
 
-            printf(") {");
+    case AST_CALL:
+    printf("%s(", root->name);
 
-            if (root->child_count > 1) {
-                printf("\n");
-                printAST(root->children[1], level);
-            }
+    if (root->child_count > 0)
+        printAST(root->children[0], level);
 
-            printf("\n}");
-            break;
-        case AST_CALL:
-            printf("%s(", root->name);
+    printf(")");
+    break;
 
-            if (root->child_count > 0)
-                printAST(root->children[0], level);
+    case AST_BREAK:
+        printf("break");
+        break;
 
-            printf(")");
-            break;
-        case AST_RETURN:
-            printf("return");
+    case AST_CONTINUE:
+        printf("continue");
+        break;
 
-            if (root->child_count > 0) {
-                printf(" ");
-                printAST(root->children[0], level);
-            }
-            break;
-        case AST_DECL:
-            printf("(DECL %s ", root->op);
-            printAST(root->children[0], level);
-
-            if (root->child_count == 2) {
-                printf(" = ");
-                printAST(root->children[1], level);
-            }
-
-            printf(")");
-            break;
-        case AST_BREAK:
-            printf("break");
-            break;
-        case AST_CONTINUE:
-            printf("continue");
-            break;
         default:
             printf("Unknown");
             break;

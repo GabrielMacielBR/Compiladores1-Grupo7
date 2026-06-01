@@ -45,11 +45,23 @@ int loopCounter = 0;
 %token IF ELSE
 %token BREAK CONTINUE
 
-%type <ast> expr declaration assignment statement statements loop conditional body block init_for cond_for step_for
-%type <ast> function_definition function_block function_call return_statement arg_list_opt arg_list
-%type <ast> parameter_list_opt parameter_list parameter
-%type <id> type_specifier
+%type <ast> input
+%type <ast> expr declaration assignment statement statements
+%type <ast> loop conditional body block init_for cond_for step_for
 
+%type <ast> function_definition
+%type <ast> function_block
+%type <ast> function_call
+%type <ast> return_statement
+
+%type <ast> arg_list_opt
+%type <ast> arg_list
+
+%type <ast> parameter_list_opt
+%type <ast> parameter_list
+%type <ast> parameter
+
+%type <id> type_specifier
 /* Regras de precedencia e associatividade */
 %left OR
 %left AND
@@ -69,32 +81,51 @@ int loopCounter = 0;
 
 /* Regras da gramatica */
 input:
-        /* vazio */
+      /* vazio */
+      {
+          $$ = NULL;
+          root = NULL;
+      }
     | input statement
-    {
-        root = $2;
-        if (root) {
-            printf("\nAST:\n");
-            printAST(root, 0);
-            printf("\n");
-            printTable();
-        }
-    }
+      {
+          if ($1 == NULL)
+              $$ = $2;
+          else
+              $$ = createNodeSeq($1, $2);
+
+          root = $$;
+
+          if ($2) {
+              printf("\nAST:\n");
+              printAST($2, 0);
+              printf("\n");
+              printTable();
+          }
+      }
     | input function_definition
-    {
-        root = $2;
-        if (root) {
-            printf("\nAST:\n");
-            printAST(root, 0);
-            printf("\n");
-            printTable();
-        }
-    }
-    | input error SEMICOLON { 
-      fprintf(stderr, "[ERRO SINTATICO] Erro recuperado ate ';'\n");
-      yyerrok; /* reset de erro */
-      yyclearin; /* limpamos o token de lookahead */
-    }
+      {
+          if ($1 == NULL)
+              $$ = $2;
+          else
+              $$ = createNodeSeq($1, $2);
+
+          root = $$;
+
+          if ($2) {
+              printf("\nAST:\n");
+              printAST($2, 0);
+              printf("\n");
+              printTable();
+          }
+      }
+    | input error SEMICOLON
+      {
+          fprintf(stderr,
+                  "[ERRO SINTATICO] Erro recuperado ate ';'\n");
+          yyerrok;
+          yyclearin;
+          $$ = $1;
+      }
     ;
 
 statement:
@@ -374,6 +405,7 @@ expr:
             fprintf(stderr, "Aviso semântico [L%d:C%d]: símbolo não declarado: %s\n", yyline, yycolumn - (int)strlen($1), $1);
         $$ = createNodeId($1);
     }
+
   ;
 
 
@@ -417,7 +449,7 @@ loop:
         {
           if (!isConditionValid($4)) {
             char _msg[128];
-            snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: condição inválida no while: %s", yyline, yycolumn);
+           snprintf(_msg, sizeof(_msg),"Erro semântico [L%d:C%d]: condição inválida no while", yyline, yycolumn);
             yyerror(_msg);
             YYABORT;
           }
@@ -435,7 +467,7 @@ loop:
         {
           if ($6 && !isConditionValid($6)) {
             char _msg[128];
-            snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: condição inválida no for: %s", yyline, yycolumn);
+           snprintf(_msg, sizeof(_msg),"Erro semântico [L%d:C%d]: condição inválida no for", yyline, yycolumn);
             yyerror(_msg);
             YYABORT;
           }
@@ -453,7 +485,7 @@ loop:
         {
           if (!isConditionValid($6)) {
             char _msg[128];
-            snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: condição inválida no do-while: %s", yyline, yycolumn);
+            snprintf(_msg, sizeof(_msg),"Erro semântico [L%d:C%d]: condição inválida no do-while",yyline, yycolumn);
             yyerror(_msg);
             YYABORT;
           }
@@ -470,7 +502,7 @@ conditional:
       {
         if (!isConditionValid($3)) {
           char _msg[128];
-          snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: condição inválida no if: %s", yyline, yycolumn);
+          snprintf(_msg, sizeof(_msg),"Erro semântico [L%d:C%d]: condição inválida no if",yyline, yycolumn);
           yyerror(_msg);
           YYABORT;
         }
@@ -482,7 +514,7 @@ conditional:
       {
         if (!isConditionValid($3)) {
           char _msg[128];
-          snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: condição inválida no if: %s", yyline, yycolumn);
+          snprintf(_msg, sizeof(_msg),"Erro semântico [L%d:C%d]: condição inválida no if", yyline, yycolumn);
           yyerror(_msg);
           YYABORT;
         }
@@ -572,6 +604,7 @@ parameter_list:
       parameter { $$ = $1; }
     | parameter_list COMMA parameter { $$ = createNodeSeq($1, $3); }
     ;
+
 
 parameter:
       type_specifier IDENT
