@@ -551,7 +551,7 @@ function_definition:
     }
     parameter_list_opt RPAREN function_block
     {
-      $$ = createNodeFunc("int", $2, $5, $7);
+  $$ = createNodeFunc($2, "int", $5, $7);
       setFunctionAst($2, $$);
       popScope();
       if (!current_function_has_return) {
@@ -576,7 +576,7 @@ function_definition:
     }
     parameter_list_opt RPAREN function_block
     {
-      $$ = createNodeFunc("float", $2, $5, $7);
+  $$ = createNodeFunc($2, "float", $5, $7);
       setFunctionAst($2, $$);
       popScope();
       if (!current_function_has_return) {

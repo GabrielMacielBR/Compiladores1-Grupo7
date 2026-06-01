@@ -29,9 +29,7 @@ int isBooleanCompatible(char *type);
 int isConditionValid(NodeAST *expr);
 int isAssignable(const char *lhs, const char *rhs);
 
-NodeAST *createNodeFunc(char *type, char *name, NodeAST *params, NodeAST *body);
 NodeAST *createNodeCall(char *name, NodeAST *args);
-NodeAST *createNodeReturn(NodeAST *value);
 
 int checkFunctionCallArgs(char *name, NodeAST *args, char *message, size_t messageSize);
 

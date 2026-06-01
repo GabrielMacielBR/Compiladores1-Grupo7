@@ -1,0 +1,11 @@
+func add() -> int {
+(DECL int a);
+(DECL int b);
+(DECL int c)
+(DECL int r);
+(ASSIGN r = ((a + b) + c));
+return r;
+
+}
+(DECL int z)
+(ASSIGN z = add(1;2;3))

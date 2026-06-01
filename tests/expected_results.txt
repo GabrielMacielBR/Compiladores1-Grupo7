@@ -1,0 +1,11 @@
+tests/teste01..c ok
+tests/teste02.c semantic_error
+tests/teste03.c semantic_error
+tests/teste04.c semantic_error
+tests/teste05.c syntax_error
+tests/teste06.c semantic_error
+tests/teste07.c semantic_error
+tests/teste08.c semantic_error
+tests/test_func_zero.c ok
+tests/test_func_multi.c ok
+tests/test_func_mismatch.c semantic_error
