@@ -1,0 +1,3 @@
+Nome: z, Tipo: int, Kind: var, Scope: 0, Decl: L3:C6
+Nome: add, Tipo: int, Kind: func, Scope: 0, Decl: L2:C5
+

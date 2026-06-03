@@ -1,0 +1,6 @@
+(DECL int x)
+func foo() -> int {
+return 0;
+}
+(DECL int y)
+(ASSIGN y = foo())

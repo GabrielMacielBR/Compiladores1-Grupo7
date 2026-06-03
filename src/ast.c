@@ -268,7 +268,7 @@ static NodeAST *listHead(NodeAST *node)
         return NULL;
 
     if (node->type == AST_SEQ)
-        return node->children[0];
+        return listHead(node->children[0]);
 
     return node;
 }
@@ -278,10 +278,27 @@ static NodeAST *listTail(NodeAST *node)
     if (!node)
         return NULL;
 
-    if (node->type == AST_SEQ)
-        return node->children[1];
+    if (node->type != AST_SEQ)
+        return NULL;
 
-    return NULL;
+    NodeAST *left = node->children[0];
+    NodeAST *right = node->children[1];
+
+    if (!left)
+        return NULL;
+
+    if (left->type != AST_SEQ) {
+        /* simplest case: node = seq(elem, rest) -> tail is rest */
+        return right;
+    }
+
+    /* left is itself a seq: reduce one level: seq( left_left, left_right ), right
+       we want a new sequence that represents left_right followed by right */
+    NodeAST *newLeft = left->children[1];
+    if (!newLeft)
+        return right;
+
+    return createNodeSeq(newLeft, right);
 }
 
 static int compareFunctionArgs(NodeAST *params,
@@ -352,8 +369,17 @@ int checkFunctionCallArgs(char *name,
 
     NodeAST *params = NULL;
 
-    if (funcAst->child_count > 0)
+    /*
+     * Estrutura do AST da função:
+     * - se child_count == 0: sem params e sem body (inválido)
+     * - se child_count == 1: normalmente significa que só existe o corpo (sem parâmetros)
+     * - se child_count >= 2: children[0] = params, children[1] = body
+     */
+    if (funcAst->child_count >= 2) {
         params = funcAst->children[0];
+    } else {
+        params = NULL; /* sem parâmetros */
+    }
 
     if (!compareFunctionArgs(params, args,
                              message, messageSize))

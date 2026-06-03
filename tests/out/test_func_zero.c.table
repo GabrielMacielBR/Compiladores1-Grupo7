@@ -1,0 +1,4 @@
+Nome: x, Tipo: int, Kind: var, Scope: 0, Decl: L2:C6
+Nome: y, Tipo: int, Kind: var, Scope: 0, Decl: L4:C6
+Nome: foo, Tipo: int, Kind: func, Scope: 0, Decl: L3:C5
+
