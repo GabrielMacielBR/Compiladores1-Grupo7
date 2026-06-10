@@ -673,7 +673,11 @@ int main(void) {
     printf("Digite expressoes terminadas com ';'. Pressione Ctrl+D para encerrar.\n");
     initTable();
     int ret = yyparse();
-    freeTable();
+  if (root) {
+    printf("INFO: Gerando TAC a partir da AST...\n");
+    generateTAC(root);
+  }
+  freeTable();
     return ret;
 }
 
