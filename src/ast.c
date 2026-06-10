@@ -567,3 +567,147 @@ switch (root->type)
     }
 }
 
+TAC *createTAC(const char *op, const char *arg1, const char *arg2, const char *result) {
+    TAC *t = malloc(sizeof(TAC));
+    if (!t) return NULL;
+    memset(t, 0, sizeof(TAC));
+    if (op) strncpy(t->op, op, sizeof(t->op)-1);
+    if (arg1) strncpy(t->arg1, arg1, sizeof(t->arg1)-1);
+    if (arg2) strncpy(t->arg2, arg2, sizeof(t->arg2)-1);
+    if (result) strncpy(t->result, result, sizeof(t->result)-1);
+    t->next = NULL;
+    return t;
+}
+
+TAC *insertTAC(TAC *list, TAC *instr) {
+    if (!instr) return list;
+    if (!list) return instr;
+    TAC *p = list;
+    while (p->next) p = p->next;
+    p->next = instr;
+    return list;
+}
+
+void printTAC(TAC *list) {
+    for (TAC *p = list; p; p = p->next) {
+        if (strcmp(p->op, "=") == 0) {
+            printf("%s = %s\n", p->result, p->arg1);
+        } else if (strcmp(p->op, "ret") == 0) {
+            if (p->arg1[0])
+                printf("ret %s\n", p->arg1);
+            else
+                printf("ret\n");
+        } else if (strlen(p->arg2) > 0) {
+            printf("%s = %s %s %s\n", p->result, p->arg1, p->op, p->arg2);
+        } else if (strcmp(p->op, "call") == 0) {
+            if (strlen(p->result) > 0)
+                printf("%s = call %s\n", p->result, p->arg1);
+            else
+                printf("call %s\n", p->arg1);
+        } else if (strcmp(p->op, "label") == 0) {
+            printf("%s:\n", p->result);
+        } else if (strcmp(p->op, "goto") == 0) {
+            printf("goto %s\n", p->result);
+        } else if (strcmp(p->op, "ifz") == 0) {
+            printf("ifz %s goto %s\n", p->arg1, p->result);
+        } else {
+            /* fallback */
+            printf("<tac op='%s' a1='%s' a2='%s' res='%s'>\n", p->op, p->arg1, p->arg2, p->result);
+        }
+    }
+}
+
+void freeTAC(TAC *list) {
+    while (list) {
+        TAC *n = list->next;
+        free(list);
+        list = n;
+    }
+}
+
+static char *genExprTAC(NodeAST *expr, TAC **list)
+{
+    if (!expr)
+        return strdup("");
+
+    switch (expr->type) {
+        case AST_NUM: {
+            char buffer[32];
+            snprintf(buffer, sizeof(buffer), "%d", expr->value);
+            return strdup(buffer);
+        }
+        case AST_FLOAT: {
+            char buffer[64];
+            snprintf(buffer, sizeof(buffer), "%f", expr->floatValue);
+            return strdup(buffer);
+        }
+        case AST_ID:
+            return strdup(expr->name);
+
+        case AST_BINOP:
+        case AST_UNOP:
+        case AST_CALL:
+            return strdup("");
+
+        default:
+            return strdup("");
+    }
+}
+
+static TAC *genNodeTAC(NodeAST *node, TAC *list) {
+    if (!node) return list;
+
+    switch (node->type) {
+        case AST_SEQ:
+            list = genNodeTAC(node->children[0], list);
+            list = genNodeTAC(node->children[1], list);
+            return list;
+
+        case AST_DECL:
+            return list;
+
+        case AST_ASSIGN: {
+            return list;
+        }
+
+        case AST_IF:
+            return list;
+
+        case AST_WHILE:
+            return list;
+
+        case AST_FOR:
+        case AST_DO_WHILE:
+            return list;
+
+        case AST_FUNC:
+            return list;
+
+        case AST_RETURN: {
+            if (node->child_count == 1) {
+                char *vbuf = genExprTAC(node->children[0], &list);
+                TAC *r = createTAC("ret", vbuf ? vbuf : "", "", "");
+                list = insertTAC(list, r);
+                free(vbuf);
+            } else {
+                TAC *r = createTAC("ret", "", "", "");
+                list = insertTAC(list, r);
+            }
+            return list;
+        }
+
+        default:
+            return list;
+    }
+}
+
+void generateTAC(NodeAST *root) {
+    TAC *list = NULL;
+    list = genNodeTAC(root, list);
+
+    printf("--- TAC emitted (basic) ---\n");
+    printTAC(list);
+    printf("--- end TAC ---\n");
+
+    freeTAC(list);
+}

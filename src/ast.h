@@ -34,8 +34,20 @@ NodeAST *createNodeCall(char *name, NodeAST *args);
 int checkFunctionCallArgs(char *name, NodeAST *args, char *message, size_t messageSize);
 
 void addChild(NodeAST *parent, NodeAST *child);
-
-void addChild(NodeAST *parent, NodeAST *child);
 void printAST(NodeAST *root, int level);
+void generateTAC(NodeAST *root);
+
+typedef struct TAC {
+	char op[32];
+	char arg1[64];
+	char arg2[64];
+	char result[64];
+	struct TAC *next;
+} TAC;
+
+TAC *createTAC(const char *op, const char *arg1, const char *arg2, const char *result);
+TAC *insertTAC(TAC *list, TAC *instr);
+void printTAC(TAC *list);
+void freeTAC(TAC *list);
 
 #endif
