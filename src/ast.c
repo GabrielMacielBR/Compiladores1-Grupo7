@@ -625,6 +625,32 @@ void freeTAC(TAC *list) {
     }
 }
 
+static int tempCounter = 0;
+
+char *newTemp() {
+    char buffer[32];
+
+    snprintf(buffer,
+             sizeof(buffer),
+             "t%d",
+             tempCounter++);
+
+    return strdup(buffer);
+}
+
+static int labelCounter = 0;
+
+char *newLabel() {
+    char buffer[32];
+
+    snprintf(buffer,
+             sizeof(buffer),
+             "L%d",
+             labelCounter++);
+
+    return strdup(buffer);
+}
+
 static char *genExprTAC(NodeAST *expr, TAC **list)
 {
     if (!expr)
@@ -644,8 +670,30 @@ static char *genExprTAC(NodeAST *expr, TAC **list)
         case AST_ID:
             return strdup(expr->name);
 
-        case AST_BINOP:
+        case AST_BINOP: {
+            char *left = genExprTAC(expr->children[0], list);
+            char *right = genExprTAC(expr->children[1], list);
+
+            char *temp = newTemp();
+
+            TAC *instr = createTAC(
+                expr->op,
+                left,
+                right,
+                temp
+            );
+
+            *list = insertTAC(*list, instr);
+
+            free(left);
+            free(right);
+
+            return temp;
+        }
+
         case AST_UNOP:
+            return strdup("");
+
         case AST_CALL:
             return strdup("");
 
@@ -663,13 +711,42 @@ static TAC *genNodeTAC(NodeAST *node, TAC *list) {
             list = genNodeTAC(node->children[1], list);
             return list;
 
-        case AST_DECL:
-            return list;
+        case AST_DECL: {
 
-        case AST_ASSIGN: {
+            if (node->child_count == 2) {
+
+                char *value =
+                    genExprTAC(node->children[1], &list);
+
+                TAC *instr =
+                    createTAC("=",
+                            value,
+                            "",
+                            node->children[0]->name);
+
+                list = insertTAC(list, instr);
+
+                free(value);
+            }
+
             return list;
         }
+        case AST_ASSIGN: {
+            char *value =
+                genExprTAC(node->children[1], &list);
 
+            TAC *instr =
+                createTAC("=",
+                        value,
+                        "",
+                        node->children[0]->name);
+
+            list = insertTAC(list, instr);
+
+            free(value);
+
+            return list;
+        }
         case AST_IF:
             return list;
 
