@@ -37,6 +37,7 @@ void addChild(NodeAST *parent, NodeAST *child);
 void printAST(NodeAST *root, int level);
 void generateTAC(NodeAST *root);
 
+
 typedef struct TAC {
 	char op[32];
 	char arg1[64];
@@ -49,5 +50,8 @@ TAC *createTAC(const char *op, const char *arg1, const char *arg2, const char *r
 TAC *insertTAC(TAC *list, TAC *instr);
 void printTAC(TAC *list);
 void freeTAC(TAC *list);
+
+char *newTemp();
+char *newLabel();
 
 #endif
