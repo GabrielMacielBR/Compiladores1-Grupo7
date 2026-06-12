@@ -227,11 +227,9 @@ NodeAST *createNodeFunc(char *name, char *ret_type,
     strcpy(newNode->name, name);
     strcpy(newNode->op, ret_type);
 
-    if (params)
-        addChild(newNode, params);
-
-    if (body)
-        addChild(newNode, body);
+    newNode->children[0] = params;
+    newNode->children[1] = body;
+    newNode->child_count = 2;
 
     return newNode;
 }
@@ -367,19 +365,7 @@ int checkFunctionCallArgs(char *name,
         return 0;
     }
 
-    NodeAST *params = NULL;
-
-    /*
-     * Estrutura do AST da função:
-     * - se child_count == 0: sem params e sem body (inválido)
-     * - se child_count == 1: normalmente significa que só existe o corpo (sem parâmetros)
-     * - se child_count >= 2: children[0] = params, children[1] = body
-     */
-    if (funcAst->child_count >= 2) {
-        params = funcAst->children[0];
-    } else {
-        params = NULL; /* sem parâmetros */
-    }
+    NodeAST *params = funcAst->children[0];
 
     if (!compareFunctionArgs(params, args,
                              message, messageSize))
@@ -466,12 +452,12 @@ switch (root->type)
         break;
     case AST_FUNC:
         printf("func %s() -> %s {\n", root->name, root->op);
-        if (root->child_count >= 1 && root->children[0])
+        if (root->children[0])
         {
             printAST(root->children[0], level);
             printf("\n");
         }
-        if (root->child_count >= 2 && root->children[1])
+        if (root->children[1])
         {
             printAST(root->children[1], level);
             printf("\n");
@@ -597,19 +583,27 @@ void printTAC(TAC *list) {
                 printf("ret %s\n", p->arg1);
             else
                 printf("ret\n");
-        } else if (strlen(p->arg2) > 0) {
-            printf("%s = %s %s %s\n", p->result, p->arg1, p->op, p->arg2);
+        } else if (strcmp(p->op, "func") == 0) {
+            printf("func %s -> %s\n", p->arg1, p->arg2);
+        } else if (strcmp(p->op, "fparam") == 0) {
+            printf("fparam %s %s\n", p->arg1, p->arg2);
+        } else if (strcmp(p->op, "param") == 0) {
+            printf("param %s\n", p->arg1);
         } else if (strcmp(p->op, "call") == 0) {
             if (strlen(p->result) > 0)
-                printf("%s = call %s\n", p->result, p->arg1);
+                printf("%s = call %s, %s\n", p->result, p->arg1, p->arg2);
             else
-                printf("call %s\n", p->arg1);
+                printf("call %s, %s\n", p->arg1, p->arg2);
+        } else if (strcmp(p->op, "endfunc") == 0) {
+            printf("endfunc %s\n", p->arg1);
         } else if (strcmp(p->op, "label") == 0) {
             printf("%s:\n", p->result);
         } else if (strcmp(p->op, "goto") == 0) {
             printf("goto %s\n", p->result);
         } else if (strcmp(p->op, "ifz") == 0) {
             printf("ifz %s goto %s\n", p->arg1, p->result);
+        } else if (strlen(p->arg2) > 0) {
+            printf("%s = %s %s %s\n", p->result, p->arg1, p->op, p->arg2);
         } else {
             /* fallback */
             printf("<tac op='%s' a1='%s' a2='%s' res='%s'>\n", p->op, p->arg1, p->arg2, p->result);
@@ -649,6 +643,59 @@ char *newLabel() {
              labelCounter++);
 
     return strdup(buffer);
+}
+
+static char *genExprTAC(NodeAST *expr, TAC **list);
+
+static void genArgsTAC(NodeAST *node, TAC **list, int *count)
+{
+    if (!node)
+        return;
+
+    if (node->type == AST_SEQ) {
+        genArgsTAC(node->children[0], list, count);
+        genArgsTAC(node->children[1], list, count);
+        return;
+    }
+
+    char *value = genExprTAC(node, list);
+    *list = insertTAC(*list, createTAC("param", value, "", ""));
+    (*count)++;
+    free(value);
+}
+
+static char *genCallTAC(NodeAST *node, TAC **list, int withResult)
+{
+    int count = 0;
+
+    if (node->child_count > 0)
+        genArgsTAC(node->children[0], list, &count);
+
+    char countBuffer[16];
+    snprintf(countBuffer, sizeof(countBuffer), "%d", count);
+
+    char *result = withResult ? newTemp() : strdup("");
+    *list = insertTAC(*list,
+                      createTAC("call", node->name,
+                                countBuffer, result));
+    return result;
+}
+
+static void genFormalParamsTAC(NodeAST *node, TAC **list)
+{
+    if (!node)
+        return;
+
+    if (node->type == AST_SEQ) {
+        genFormalParamsTAC(node->children[0], list);
+        genFormalParamsTAC(node->children[1], list);
+        return;
+    }
+
+    if (node->type == AST_DECL && node->child_count > 0)
+        *list = insertTAC(*list,
+                          createTAC("fparam", node->op,
+                                    node->children[0]->name, ""));
 }
 
 static char *genExprTAC(NodeAST *expr, TAC **list)
@@ -695,7 +742,7 @@ static char *genExprTAC(NodeAST *expr, TAC **list)
             return strdup("");
 
         case AST_CALL:
-            return strdup("");
+            return genCallTAC(expr, list, 1);
 
         default:
             return strdup("");
@@ -758,7 +805,21 @@ static TAC *genNodeTAC(NodeAST *node, TAC *list) {
             return list;
 
         case AST_FUNC:
+            list = insertTAC(list,
+                             createTAC("func", node->name,
+                                       node->op, ""));
+            genFormalParamsTAC(node->children[0], &list);
+            list = genNodeTAC(node->children[1], list);
+            list = insertTAC(list,
+                             createTAC("endfunc", node->name,
+                                       "", ""));
             return list;
+
+        case AST_CALL: {
+            char *value = genCallTAC(node, &list, 0);
+            free(value);
+            return list;
+        }
 
         case AST_RETURN: {
             if (node->child_count == 1) {
