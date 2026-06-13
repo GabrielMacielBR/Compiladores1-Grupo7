@@ -747,8 +747,39 @@ static TAC *genNodeTAC(NodeAST *node, TAC *list) {
 
             return list;
         }
-        case AST_IF:
+        case AST_IF: {
+            char *condTemp = genExprTAC(node->children[0], &list);
+            char *labelFalse = newLabel();
+
+            TAC *instrIfz = createTAC("ifz", condTemp, "", labelFalse);
+            list = insertTAC(list, instrIfz);
+            list = genNodeTAC(node->children[1], list);
+
+            if (node->child_count == 3 && node->children[2] != NULL) {
+                char *labelEnd = newLabel();
+                
+                TAC *instrGoto = createTAC("goto", "", "", labelEnd);
+                list = insertTAC(list, instrGoto);
+
+                TAC *instrLabelFalse = createTAC("label", "", "", labelFalse);
+                list = insertTAC(list, instrLabelFalse);
+
+                list = genNodeTAC(node->children[2], list);
+
+                TAC *instrLabelEnd = createTAC("label", "", "", labelEnd);
+                list = insertTAC(list, instrLabelEnd);
+                
+                free(labelEnd);
+            } else {
+                TAC *instrLabelFalse = createTAC("label", "", "", labelFalse);
+                list = insertTAC(list, instrLabelFalse);
+            }
+
+            free(condTemp);
+            free(labelFalse);
+
             return list;
+        }
 
         case AST_WHILE:
             return list;
