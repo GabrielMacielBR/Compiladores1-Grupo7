@@ -71,7 +71,11 @@ void insertSymbol(char *name, char *type, int line, int col) {
         if (strcmp(s->name, name) == 0 &&
             strcmp(s->kind, "var") == 0 &&
             s->scope == current_scope)
+        {
+            /* Redeclaração no mesmo escopo -> erro semântico */
+            fprintf(stderr, "Erro semântico [L%d:C%d]: símbolo já declarado no mesmo escopo: %s\n", line, col, name);
             return;
+        }
     }
     Symbol *new = malloc(sizeof(Symbol));
     if (!new) return;
@@ -92,8 +96,11 @@ void insertFunction(char *name, char *returnType, int line, int col) {
     unsigned long h = hash(name) % TABLE_SIZE;
 
     for (Symbol *s = table[h]; s; s = s->next) {
-        if (strcmp(s->name, name) == 0 && strcmp(s->kind, "func") == 0)
+        if (strcmp(s->name, name) == 0 && strcmp(s->kind, "func") == 0) {
+            /* Redeclaração de função -> erro semântico */
+            fprintf(stderr, "Erro semântico [L%d:C%d]: função já declarada: %s\n", line, col, name);
             return;
+        }
     }
 
     Symbol *new = malloc(sizeof(Symbol));
