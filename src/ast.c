@@ -752,6 +752,10 @@ static char *genExprTAC(NodeAST *expr, TAC **list)
 static TAC *genNodeTAC(NodeAST *node, TAC *list) {
     if (!node) return list;
 
+    static char *breakLabelStack[64];
+    static char *continueLabelStack[64];
+    static int loopDepth = 0;
+
     switch (node->type) {
         case AST_SEQ:
             list = genNodeTAC(node->children[0], list);
@@ -828,12 +832,118 @@ static TAC *genNodeTAC(NodeAST *node, TAC *list) {
             return list;
         }
 
-        case AST_WHILE:
-            return list;
+        case AST_WHILE: {
+            char *labelStart = newLabel();
+            char *labelFalse = newLabel();
 
-        case AST_FOR:
-        case AST_DO_WHILE:
+            /* Armazene os rótulos (labels) alocados na pilha (stack), sem fazer um strdup adicional. */
+            breakLabelStack[loopDepth] = labelFalse;
+            continueLabelStack[loopDepth] = labelStart;
+            loopDepth++;
+
+            list = insertTAC(list, createTAC("label", "", "", labelStart));
+
+            if (node->children[0]) {
+                char *condTemp = genExprTAC(node->children[0], &list);
+                list = insertTAC(list, createTAC("ifz", condTemp, "", labelFalse));
+                free(condTemp);
+            }
+
+            list = genNodeTAC(node->children[1], list);
+
+            list = insertTAC(list, createTAC("goto", "", "", labelStart));
+
+            list = insertTAC(list, createTAC("label", "", "", labelFalse));
+
+            loopDepth--;
+            free(breakLabelStack[loopDepth]);
+            free(continueLabelStack[loopDepth]);
             return list;
+        }
+
+        case AST_FOR: {
+            NodeAST *init = node->children[0];
+            NodeAST *cond = node->children[1];
+            NodeAST *step = node->children[2];
+            NodeAST *body = node->children[3];
+
+            if (init)
+                list = genNodeTAC(init, list);
+            char *labelStart = newLabel();
+            char *labelFalse = newLabel();
+            char *labelStep = newLabel();
+
+            breakLabelStack[loopDepth] = labelFalse;
+            continueLabelStack[loopDepth] = labelStep;
+            loopDepth++;
+
+            list = insertTAC(list, createTAC("label", "", "", labelStart));
+
+            if (cond) {
+                char *condTemp = genExprTAC(cond, &list);
+                list = insertTAC(list, createTAC("ifz", condTemp, "", labelFalse));
+                free(condTemp);
+            }
+
+            list = genNodeTAC(body, list);
+
+            list = insertTAC(list, createTAC("label", "", "", labelStep));
+
+            if (step)
+                list = genNodeTAC(step, list);
+
+            list = insertTAC(list, createTAC("goto", "", "", labelStart));
+
+            list = insertTAC(list, createTAC("label", "", "", labelFalse));
+
+            /* Libera o labelStart, que não está armazenado na pilha. */
+            free(labelStart);
+
+            loopDepth--;
+            free(breakLabelStack[loopDepth]);
+            free(continueLabelStack[loopDepth]);
+
+            return list;
+        }
+
+        case AST_DO_WHILE: {
+            NodeAST *body = node->children[0];
+            NodeAST *cond = node->children[1];
+
+            char *labelStart = newLabel();
+            char *labelCond = newLabel();
+            char *labelFalse = newLabel();
+
+            
+            breakLabelStack[loopDepth] = labelFalse;
+            continueLabelStack[loopDepth] = labelCond;
+            loopDepth++;
+
+            list = insertTAC(list, createTAC("label", "", "", labelStart));
+
+            list = genNodeTAC(body, list);
+
+            /* Rótulo da condição: avaliar a condição aqui!! */
+            list = insertTAC(list, createTAC("label", "", "", labelCond));
+
+            if (cond) {
+                char *condTemp = genExprTAC(cond, &list);
+                list = insertTAC(list, createTAC("ifz", condTemp, "", labelFalse));
+                list = insertTAC(list, createTAC("goto", "", "", labelStart));
+                free(condTemp);
+            }
+
+            list = insertTAC(list, createTAC("label", "", "", labelFalse));
+
+            /* Libere o o labelStart, que não está armazenado na pilha!!!*/
+            free(labelStart);
+
+            loopDepth--;
+            free(breakLabelStack[loopDepth]);
+            free(continueLabelStack[loopDepth]);
+
+            return list;
+        }
 
         case AST_FUNC:
             list = insertTAC(list,

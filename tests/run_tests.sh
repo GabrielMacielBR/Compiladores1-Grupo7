@@ -77,14 +77,18 @@ while read -r line; do
         # extract Tabela block (from 'Tabela de Símbolos' to next blank line)
   TAB_OUT="$TEST_DIR/out/$(basename "$file_rel").table"
            # extract the last 'Tabela de Símbolos' block robustly (handles EOF without trailing blank line)
-           awk '
-             /^Tabela de Símbolos/{p=1; next}
-             p {
-             if (/^$/) { if (buf!="") { last=buf; buf=""; p=0 } }
-             else { buf = buf $0 "\n" }
-             }
-             END { if (buf!="") last=buf; if (last!="") print last }
-           ' "$out" > "$TAB_OUT" || true
+          awk '
+            /^Tabela de Símbolos/{p=1; next}
+            p {
+              # stop if we hit an INFO/TAC header or an empty line
+              if (/^INFO:/ || /^--- TAC emitted/ || /^$/) {
+                if (buf!="") { last=buf; buf=""; p=0 }
+              } else {
+                buf = buf $0 "\n"
+              }
+            }
+            END { if (buf!="") last=buf; if (last!="") print last }
+          ' "$out" > "$TAB_OUT" || true
         FIXT="$TEST_DIR/expected_table/$(basename "$file_rel").table"
         if [ -f "$FIXT" ]; then
           # normalize table: remove '(hash)' and collapse whitespace
