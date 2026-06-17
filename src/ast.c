@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include "table.h"
 
 NodeAST *createNode(NodeType type) {
@@ -989,4 +988,143 @@ void generateTAC(NodeAST *root) {
     printf("--- end TAC ---\n");
 
     freeTAC(list);
+}
+
+char *genExprPython(NodeAST *expr) {
+    if (!expr) return strdup("");
+
+    switch (expr->type) {
+        case AST_NUM: {
+            char buffer[32];
+            snprintf(buffer, sizeof(buffer), "%d", expr->value);
+            return strdup(buffer);
+        }
+        
+        case AST_FLOAT: {
+            char buffer[64];
+            snprintf(buffer, sizeof(buffer), "%f", expr->floatValue);
+            return strdup(buffer);
+        }
+        
+        case AST_ID:
+            return strdup(expr->name);
+        
+        case AST_BINOP: {
+            char *left = genExprPython(expr->children[0]);
+            char *right = genExprPython(expr->children[1]);
+
+            const char *pyOp = expr->op;
+            if (strcmp(expr->op, "&&") == 0) {
+                pyOp = "and";
+            } else if (strcmp(expr->op, "||") == 0) {
+                pyOp = "or";
+            }
+
+            size_t size = strlen(left) + strlen(pyOp) + strlen(right) + 6;
+            char *result = malloc(size);
+
+            if (result) {
+                snprintf(result, size, "(%s %s %s)", left, pyOp, right);
+            }
+
+            free(left);
+            free(right);
+
+            return result;
+        }
+
+        case AST_UNOP: {
+            char *child = genExprPython(expr->children[0]);
+
+            const char *pyOp = expr->op;
+            if (strcmp(expr->op, "!") == 0) {
+                pyOp = "not ";
+            }
+
+            size_t size = strlen(pyOp) + strlen(child) + 4;
+            char *result = malloc(size);
+
+            if (result) {
+                snprintf(result, size, "(%s%s)", pyOp, child);
+            }
+
+            free(child);
+            return result;
+        }
+
+        case AST_CALL: {
+            char *args = genExprPython(expr->children[0]);
+
+            size_t size = strlen(expr->name) + strlen(args) + 3;
+            char *result = malloc(size);
+
+            if (result) {
+                snprintf(result, size, "%s(%s)", expr->name, args);
+            }
+
+            free(args);
+            return result;
+        }
+
+        case AST_SEQ: {
+            char *left = genExprPython(expr->children[0]);
+            char *right = genExprPython(expr->children[1]);
+
+            if (strlen(left) == 0) {
+                free(left);
+                return right;
+            }
+            if (strlen(right) == 0) {
+                free(right);
+                return left;
+            }
+
+            size_t size = strlen(left) + strlen(right) + 3;
+            char *result = malloc(size);
+
+            if (result) {
+                snprintf(result, size, "%s, %s", left, right);
+            }
+
+            free(left);
+            free(right);
+            return result;
+        }
+
+        default:
+            return strdup("");
+    }
+}
+
+void genNodePython(NodeAST *node, FILE *out) {
+    if (!node) return;
+
+    switch (node->type) {
+        case AST_SEQ:
+            genNodePython(node->children[0], out);
+            genNodePython(node->children[1], out);
+            break;
+        default:
+            break;
+    }
+}
+
+void generatePythonFile(NodeAST *root, char *filename) {
+    if (!root) {
+        printf("Aviso: AST vazia, nenhum código Python gerado.\n");
+        return;
+    }
+
+    FILE *file = fopen(filename, "w");
+    if (!file) {
+        fprintf(stderr, "Erro: Não foi possível criar ou abrir o arquivo %s.\n", filename);
+        return;
+    }
+
+    printf("INFO: Gerando código Python no arquivo '%s'.\n", filename);
+
+    genNodePython(root, file);
+    fclose(file);
+    
+    printf("SUCESSO: Arquivo '%s' gerado com sucesso!\n", filename);
 }

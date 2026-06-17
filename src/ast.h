@@ -36,7 +36,7 @@ int checkFunctionCallArgs(char *name, NodeAST *args, char *message, size_t messa
 void addChild(NodeAST *parent, NodeAST *child);
 void printAST(NodeAST *root, int level);
 void generateTAC(NodeAST *root);
-
+void generatePythonFile(NodeAST *root, char *filename);
 
 typedef struct TAC {
 	char op[32];
