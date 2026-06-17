@@ -676,6 +676,7 @@ int main(void) {
   if (root) {
     printf("INFO: Gerando TAC a partir da AST...\n");
     generateTAC(root);
+    generatePythonFile(root, "result.py");
   }
   freeTable();
     return ret;
