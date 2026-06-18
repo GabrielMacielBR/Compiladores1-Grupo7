@@ -38,7 +38,8 @@ void printAST(NodeAST *root, int level);
 void generateTAC(NodeAST *root);
 void generatePythonFile(NodeAST *root, char *filename);
 
-typedef struct TAC {
+typedef struct TAC
+{
 	char op[32];
 	char arg1[64];
 	char arg2[64];
@@ -53,5 +54,7 @@ void freeTAC(TAC *list);
 
 char *newTemp();
 char *newLabel();
+
+TAC *optimizeTAC(TAC *list);
 
 #endif

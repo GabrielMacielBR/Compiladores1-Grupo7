@@ -4,7 +4,8 @@
 #include <string.h>
 #include "table.h"
 
-NodeAST *createNode(NodeType type) {
+NodeAST *createNode(NodeType type)
+{
 
     NodeAST *newNode = malloc(sizeof(NodeAST));
 
@@ -27,7 +28,8 @@ NodeAST *createNodeNum(int value)
     return newNode;
 }
 
-NodeAST *createNodeFloat(float value) {
+NodeAST *createNodeFloat(float value)
+{
     NodeAST *newNode = createNode(AST_FLOAT);
     newNode->floatValue = value;
     strcpy(newNode->dataType, "float");
@@ -57,8 +59,10 @@ NodeAST *createNodeBinOp(char *op, NodeAST *left, NodeAST *right)
     addChild(newNode, right);
 
     // Operações aritméticas
-    if (strcmp(op, "+") == 0 || strcmp(op, "-") == 0 || strcmp(op, "*") == 0 || strcmp(op, "/") == 0) {
-        if (!isNumeric(left->dataType) || !isNumeric(right->dataType)) {
+    if (strcmp(op, "+") == 0 || strcmp(op, "-") == 0 || strcmp(op, "*") == 0 || strcmp(op, "/") == 0)
+    {
+        if (!isNumeric(left->dataType) || !isNumeric(right->dataType))
+        {
             fprintf(stderr, "Erro semântico: operação aritmética inválida\n");
 
             strcpy(newNode->dataType, "error");
@@ -72,10 +76,11 @@ NodeAST *createNodeBinOp(char *op, NodeAST *left, NodeAST *right)
     }
 
     // Operadores relacionais
-    else if (strcmp(op, "<") == 0 || strcmp(op, ">") == 0 || strcmp(op, "<=") == 0
-        || strcmp(op, ">=") == 0 || strcmp(op, "==") == 0 || strcmp(op, "!=") == 0) {
+    else if (strcmp(op, "<") == 0 || strcmp(op, ">") == 0 || strcmp(op, "<=") == 0 || strcmp(op, ">=") == 0 || strcmp(op, "==") == 0 || strcmp(op, "!=") == 0)
+    {
 
-        if (!isNumeric(left->dataType) || !isNumeric(right->dataType)) {
+        if (!isNumeric(left->dataType) || !isNumeric(right->dataType))
+        {
             fprintf(stderr, "Erro semântico: comparação inválida\n");
 
             strcpy(newNode->dataType, "error");
@@ -84,9 +89,11 @@ NodeAST *createNodeBinOp(char *op, NodeAST *left, NodeAST *right)
         strcpy(newNode->dataType, "int");
     }
 
-    // Operadores lógicos 
-    else if (strcmp(op, "&&") == 0 || strcmp(op, "||") == 0) {
-        if (!isBooleanCompatible(left->dataType) || !isBooleanCompatible(right->dataType)) {
+    // Operadores lógicos
+    else if (strcmp(op, "&&") == 0 || strcmp(op, "||") == 0)
+    {
+        if (!isBooleanCompatible(left->dataType) || !isBooleanCompatible(right->dataType))
+        {
             fprintf(stderr, "Erro semântico: operação lógica inválida\n");
 
             strcpy(newNode->dataType, "error");
@@ -103,8 +110,9 @@ NodeAST *createNodeUnOp(char *op, NodeAST *left)
     strcpy(newNode->op, op);
 
     addChild(newNode, left);
-    
-    if (left) {
+
+    if (left)
+    {
         strcpy(newNode->dataType, left->dataType);
     }
 
@@ -192,19 +200,23 @@ NodeAST *createNodeDecl(char *type, NodeAST *id, NodeAST *value)
     return newNode;
 }
 
-int isNumeric(char *type) {
+int isNumeric(char *type)
+{
     return strcmp(type, "int") == 0 || strcmp(type, "float") == 0;
 }
 
-int isBooleanCompatible(char *type) {
+int isBooleanCompatible(char *type)
+{
     return strcmp(type, "int") == 0;
 }
 
-int isConditionValid(NodeAST *expr) {
+int isConditionValid(NodeAST *expr)
+{
     return strcmp(expr->dataType, "int") == 0;
 }
 
-int isAssignable(const char *lhs, const char *rhs) {
+int isAssignable(const char *lhs, const char *rhs)
+{
     if (strcmp(rhs, "error") == 0)
         return 0;
 
@@ -284,7 +296,8 @@ static NodeAST *listTail(NodeAST *node)
     if (!left)
         return NULL;
 
-    if (left->type != AST_SEQ) {
+    if (left->type != AST_SEQ)
+    {
         /* simplest case: node = seq(elem, rest) -> tail is rest */
         return right;
     }
@@ -389,8 +402,8 @@ void printAST(NodeAST *root, int level)
     if (!root)
         return;
 
-switch (root->type)
-{
+    switch (root->type)
+    {
     case AST_NUM:
         printf("%d", root->value);
         break;
@@ -530,13 +543,13 @@ switch (root->type)
         break;
 
     case AST_CALL:
-    printf("%s(", root->name);
+        printf("%s(", root->name);
 
-    if (root->child_count > 0)
-        printAST(root->children[0], level);
+        if (root->child_count > 0)
+            printAST(root->children[0], level);
 
-    printf(")");
-    break;
+        printf(")");
+        break;
 
     case AST_BREAK:
         printf("break");
@@ -546,72 +559,109 @@ switch (root->type)
         printf("continue");
         break;
 
-        default:
-            printf("Unknown");
-            break;
+    default:
+        printf("Unknown");
+        break;
     }
 }
 
-TAC *createTAC(const char *op, const char *arg1, const char *arg2, const char *result) {
+TAC *createTAC(const char *op, const char *arg1, const char *arg2, const char *result)
+{
     TAC *t = malloc(sizeof(TAC));
-    if (!t) return NULL;
+    if (!t)
+        return NULL;
     memset(t, 0, sizeof(TAC));
-    if (op) strncpy(t->op, op, sizeof(t->op)-1);
-    if (arg1) strncpy(t->arg1, arg1, sizeof(t->arg1)-1);
-    if (arg2) strncpy(t->arg2, arg2, sizeof(t->arg2)-1);
-    if (result) strncpy(t->result, result, sizeof(t->result)-1);
+    if (op)
+        strncpy(t->op, op, sizeof(t->op) - 1);
+    if (arg1)
+        strncpy(t->arg1, arg1, sizeof(t->arg1) - 1);
+    if (arg2)
+        strncpy(t->arg2, arg2, sizeof(t->arg2) - 1);
+    if (result)
+        strncpy(t->result, result, sizeof(t->result) - 1);
     t->next = NULL;
     return t;
 }
 
-TAC *insertTAC(TAC *list, TAC *instr) {
-    if (!instr) return list;
-    if (!list) return instr;
+TAC *insertTAC(TAC *list, TAC *instr)
+{
+    if (!instr)
+        return list;
+    if (!list)
+        return instr;
     TAC *p = list;
-    while (p->next) p = p->next;
+    while (p->next)
+        p = p->next;
     p->next = instr;
     return list;
 }
 
-void printTAC(TAC *list) {
-    for (TAC *p = list; p; p = p->next) {
-        if (strcmp(p->op, "=") == 0) {
+void printTAC(TAC *list)
+{
+    for (TAC *p = list; p; p = p->next)
+    {
+        if (strcmp(p->op, "=") == 0)
+        {
             printf("%s = %s\n", p->result, p->arg1);
-        } else if (strcmp(p->op, "ret") == 0) {
+        }
+        else if (strcmp(p->op, "ret") == 0)
+        {
             if (p->arg1[0])
                 printf("ret %s\n", p->arg1);
             else
                 printf("ret\n");
-        } else if (strcmp(p->op, "func") == 0) {
+        }
+        else if (strcmp(p->op, "func") == 0)
+        {
             printf("func %s -> %s\n", p->arg1, p->arg2);
-        } else if (strcmp(p->op, "fparam") == 0) {
+        }
+        else if (strcmp(p->op, "fparam") == 0)
+        {
             printf("fparam %s %s\n", p->arg1, p->arg2);
-        } else if (strcmp(p->op, "param") == 0) {
+        }
+        else if (strcmp(p->op, "param") == 0)
+        {
             printf("param %s\n", p->arg1);
-        } else if (strcmp(p->op, "call") == 0) {
+        }
+        else if (strcmp(p->op, "call") == 0)
+        {
             if (strlen(p->result) > 0)
                 printf("%s = call %s, %s\n", p->result, p->arg1, p->arg2);
             else
                 printf("call %s, %s\n", p->arg1, p->arg2);
-        } else if (strcmp(p->op, "endfunc") == 0) {
+        }
+        else if (strcmp(p->op, "endfunc") == 0)
+        {
             printf("endfunc %s\n", p->arg1);
-        } else if (strcmp(p->op, "label") == 0) {
+        }
+        else if (strcmp(p->op, "label") == 0)
+        {
             printf("%s:\n", p->result);
-        } else if (strcmp(p->op, "goto") == 0) {
+        }
+        else if (strcmp(p->op, "goto") == 0)
+        {
             printf("goto %s\n", p->result);
-        } else if (strcmp(p->op, "ifz") == 0) {
+        }
+        else if (strcmp(p->op, "ifz") == 0)
+        {
             printf("ifz %s goto %s\n", p->arg1, p->result);
-        } else if (strlen(p->arg2) > 0) {
+        }
+        else if (strlen(p->arg2) > 0)
+        {
             printf("%s = %s %s %s\n", p->result, p->arg1, p->op, p->arg2);
-        } else {
+        }
+        else
+        {
             /* fallback */
             printf("<tac op='%s' a1='%s' a2='%s' res='%s'>\n", p->op, p->arg1, p->arg2, p->result);
         }
     }
 }
 
-void freeTAC(TAC *list) {
-    while (list) {
+void freeTAC(TAC *list)
+{
+    while (list)
+    {
         TAC *n = list->next;
         free(list);
         list = n;
@@ -620,7 +670,8 @@ void freeTAC(TAC *list) {
 
 static int tempCounter = 0;
 
-char *newTemp() {
+char *newTemp()
+{
     char buffer[32];
 
     snprintf(buffer,
@@ -633,7 +684,8 @@ char *newTemp() {
 
 static int labelCounter = 0;
 
-char *newLabel() {
+char *newLabel()
+{
     char buffer[32];
 
     snprintf(buffer,
@@ -651,7 +703,8 @@ static void genArgsTAC(NodeAST *node, TAC **list, int *count)
     if (!node)
         return;
 
-    if (node->type == AST_SEQ) {
+    if (node->type == AST_SEQ)
+    {
         genArgsTAC(node->children[0], list, count);
         genArgsTAC(node->children[1], list, count);
         return;
@@ -685,7 +738,8 @@ static void genFormalParamsTAC(NodeAST *node, TAC **list)
     if (!node)
         return;
 
-    if (node->type == AST_SEQ) {
+    if (node->type == AST_SEQ)
+    {
         genFormalParamsTAC(node->children[0], list);
         genFormalParamsTAC(node->children[1], list);
         return;
@@ -702,286 +756,322 @@ static char *genExprTAC(NodeAST *expr, TAC **list)
     if (!expr)
         return strdup("");
 
-    switch (expr->type) {
-        case AST_NUM: {
-            char buffer[32];
-            snprintf(buffer, sizeof(buffer), "%d", expr->value);
-            return strdup(buffer);
-        }
-        case AST_FLOAT: {
-            char buffer[64];
-            snprintf(buffer, sizeof(buffer), "%f", expr->floatValue);
-            return strdup(buffer);
-        }
-        case AST_ID:
-            return strdup(expr->name);
+    switch (expr->type)
+    {
+    case AST_NUM:
+    {
+        char buffer[32];
+        snprintf(buffer, sizeof(buffer), "%d", expr->value);
+        return strdup(buffer);
+    }
+    case AST_FLOAT:
+    {
+        char buffer[64];
+        snprintf(buffer, sizeof(buffer), "%f", expr->floatValue);
+        return strdup(buffer);
+    }
+    case AST_ID:
+        return strdup(expr->name);
 
-        case AST_BINOP: {
-            char *left = genExprTAC(expr->children[0], list);
-            char *right = genExprTAC(expr->children[1], list);
+    case AST_BINOP:
+    {
+        char *left = genExprTAC(expr->children[0], list);
+        char *right = genExprTAC(expr->children[1], list);
 
-            char *temp = newTemp();
+        char *temp = newTemp();
 
-            TAC *instr = createTAC(
-                expr->op,
-                left,
-                right,
-                temp
-            );
+        TAC *instr = createTAC(
+            expr->op,
+            left,
+            right,
+            temp);
 
-            *list = insertTAC(*list, instr);
+        *list = insertTAC(*list, instr);
 
-            free(left);
-            free(right);
+        free(left);
+        free(right);
 
-            return temp;
-        }
+        return temp;
+    }
 
-        case AST_UNOP:
-            return strdup("");
+    case AST_UNOP:
+        return strdup("");
 
-        case AST_CALL:
-            return genCallTAC(expr, list, 1);
+    case AST_CALL:
+        return genCallTAC(expr, list, 1);
 
-        default:
-            return strdup("");
+    default:
+        return strdup("");
     }
 }
 
-static TAC *genNodeTAC(NodeAST *node, TAC *list) {
-    if (!node) return list;
+static TAC *genNodeTAC(NodeAST *node, TAC *list)
+{
+    if (!node)
+        return list;
 
     static char *breakLabelStack[64];
     static char *continueLabelStack[64];
     static int loopDepth = 0;
 
-    switch (node->type) {
-        case AST_SEQ:
-            list = genNodeTAC(node->children[0], list);
-            list = genNodeTAC(node->children[1], list);
-            return list;
+    switch (node->type)
+    {
+    case AST_SEQ:
+        list = genNodeTAC(node->children[0], list);
+        list = genNodeTAC(node->children[1], list);
+        return list;
 
-        case AST_DECL: {
+    case AST_DECL:
+    {
 
-            if (node->child_count == 2) {
+        if (node->child_count == 2)
+        {
 
-                char *value =
-                    genExprTAC(node->children[1], &list);
-
-                TAC *instr =
-                    createTAC("=",
-                            value,
-                            "",
-                            node->children[0]->name);
-
-                list = insertTAC(list, instr);
-
-                free(value);
-            }
-
-            return list;
-        }
-        case AST_ASSIGN: {
             char *value =
                 genExprTAC(node->children[1], &list);
 
             TAC *instr =
                 createTAC("=",
-                        value,
-                        "",
-                        node->children[0]->name);
+                          value,
+                          "",
+                          node->children[0]->name);
 
             list = insertTAC(list, instr);
 
             free(value);
-
-            return list;
         }
-        case AST_IF: {
+
+        return list;
+    }
+    case AST_ASSIGN:
+    {
+        char *value =
+            genExprTAC(node->children[1], &list);
+
+        TAC *instr =
+            createTAC("=",
+                      value,
+                      "",
+                      node->children[0]->name);
+
+        list = insertTAC(list, instr);
+
+        free(value);
+
+        return list;
+    }
+    case AST_IF:
+    {
+        char *condTemp = genExprTAC(node->children[0], &list);
+        char *labelFalse = newLabel();
+
+        TAC *instrIfz = createTAC("ifz", condTemp, "", labelFalse);
+        list = insertTAC(list, instrIfz);
+        list = genNodeTAC(node->children[1], list);
+
+        if (node->child_count == 3 && node->children[2] != NULL)
+        {
+            char *labelEnd = newLabel();
+
+            TAC *instrGoto = createTAC("goto", "", "", labelEnd);
+            list = insertTAC(list, instrGoto);
+
+            TAC *instrLabelFalse = createTAC("label", "", "", labelFalse);
+            list = insertTAC(list, instrLabelFalse);
+
+            list = genNodeTAC(node->children[2], list);
+
+            TAC *instrLabelEnd = createTAC("label", "", "", labelEnd);
+            list = insertTAC(list, instrLabelEnd);
+
+            free(labelEnd);
+        }
+        else
+        {
+            TAC *instrLabelFalse = createTAC("label", "", "", labelFalse);
+            list = insertTAC(list, instrLabelFalse);
+        }
+
+        free(condTemp);
+        free(labelFalse);
+
+        return list;
+    }
+
+    case AST_WHILE:
+    {
+        char *labelStart = newLabel();
+        char *labelFalse = newLabel();
+
+        /* Armazene os rótulos (labels) alocados na pilha (stack), sem fazer um strdup adicional. */
+        breakLabelStack[loopDepth] = labelFalse;
+        continueLabelStack[loopDepth] = labelStart;
+        loopDepth++;
+
+        list = insertTAC(list, createTAC("label", "", "", labelStart));
+
+        if (node->children[0])
+        {
             char *condTemp = genExprTAC(node->children[0], &list);
-            char *labelFalse = newLabel();
-
-            TAC *instrIfz = createTAC("ifz", condTemp, "", labelFalse);
-            list = insertTAC(list, instrIfz);
-            list = genNodeTAC(node->children[1], list);
-
-            if (node->child_count == 3 && node->children[2] != NULL) {
-                char *labelEnd = newLabel();
-                
-                TAC *instrGoto = createTAC("goto", "", "", labelEnd);
-                list = insertTAC(list, instrGoto);
-
-                TAC *instrLabelFalse = createTAC("label", "", "", labelFalse);
-                list = insertTAC(list, instrLabelFalse);
-
-                list = genNodeTAC(node->children[2], list);
-
-                TAC *instrLabelEnd = createTAC("label", "", "", labelEnd);
-                list = insertTAC(list, instrLabelEnd);
-                
-                free(labelEnd);
-            } else {
-                TAC *instrLabelFalse = createTAC("label", "", "", labelFalse);
-                list = insertTAC(list, instrLabelFalse);
-            }
-
+            list = insertTAC(list, createTAC("ifz", condTemp, "", labelFalse));
             free(condTemp);
-            free(labelFalse);
-
-            return list;
         }
 
-        case AST_WHILE: {
-            char *labelStart = newLabel();
-            char *labelFalse = newLabel();
+        list = genNodeTAC(node->children[1], list);
 
-            /* Armazene os rótulos (labels) alocados na pilha (stack), sem fazer um strdup adicional. */
-            breakLabelStack[loopDepth] = labelFalse;
-            continueLabelStack[loopDepth] = labelStart;
-            loopDepth++;
+        list = insertTAC(list, createTAC("goto", "", "", labelStart));
 
-            list = insertTAC(list, createTAC("label", "", "", labelStart));
+        list = insertTAC(list, createTAC("label", "", "", labelFalse));
 
-            if (node->children[0]) {
-                char *condTemp = genExprTAC(node->children[0], &list);
-                list = insertTAC(list, createTAC("ifz", condTemp, "", labelFalse));
-                free(condTemp);
-            }
+        loopDepth--;
+        free(breakLabelStack[loopDepth]);
+        free(continueLabelStack[loopDepth]);
+        return list;
+    }
 
-            list = genNodeTAC(node->children[1], list);
+    case AST_FOR:
+    {
+        NodeAST *init = node->children[0];
+        NodeAST *cond = node->children[1];
+        NodeAST *step = node->children[2];
+        NodeAST *body = node->children[3];
 
+        if (init)
+            list = genNodeTAC(init, list);
+        char *labelStart = newLabel();
+        char *labelFalse = newLabel();
+        char *labelStep = newLabel();
+
+        breakLabelStack[loopDepth] = labelFalse;
+        continueLabelStack[loopDepth] = labelStep;
+        loopDepth++;
+
+        list = insertTAC(list, createTAC("label", "", "", labelStart));
+
+        if (cond)
+        {
+            char *condTemp = genExprTAC(cond, &list);
+            list = insertTAC(list, createTAC("ifz", condTemp, "", labelFalse));
+            free(condTemp);
+        }
+
+        list = genNodeTAC(body, list);
+
+        list = insertTAC(list, createTAC("label", "", "", labelStep));
+
+        if (step)
+            list = genNodeTAC(step, list);
+
+        list = insertTAC(list, createTAC("goto", "", "", labelStart));
+
+        list = insertTAC(list, createTAC("label", "", "", labelFalse));
+
+        /* Libera o labelStart, que não está armazenado na pilha. */
+        free(labelStart);
+
+        loopDepth--;
+        free(breakLabelStack[loopDepth]);
+        free(continueLabelStack[loopDepth]);
+
+        return list;
+    }
+
+    case AST_DO_WHILE:
+    {
+        NodeAST *body = node->children[0];
+        NodeAST *cond = node->children[1];
+
+        char *labelStart = newLabel();
+        char *labelCond = newLabel();
+        char *labelFalse = newLabel();
+
+        breakLabelStack[loopDepth] = labelFalse;
+        continueLabelStack[loopDepth] = labelCond;
+        loopDepth++;
+
+        list = insertTAC(list, createTAC("label", "", "", labelStart));
+
+        list = genNodeTAC(body, list);
+
+        /* Rótulo da condição: avaliar a condição aqui!! */
+        list = insertTAC(list, createTAC("label", "", "", labelCond));
+
+        if (cond)
+        {
+            char *condTemp = genExprTAC(cond, &list);
+            list = insertTAC(list, createTAC("ifz", condTemp, "", labelFalse));
             list = insertTAC(list, createTAC("goto", "", "", labelStart));
-
-            list = insertTAC(list, createTAC("label", "", "", labelFalse));
-
-            loopDepth--;
-            free(breakLabelStack[loopDepth]);
-            free(continueLabelStack[loopDepth]);
-            return list;
+            free(condTemp);
         }
 
-        case AST_FOR: {
-            NodeAST *init = node->children[0];
-            NodeAST *cond = node->children[1];
-            NodeAST *step = node->children[2];
-            NodeAST *body = node->children[3];
+        list = insertTAC(list, createTAC("label", "", "", labelFalse));
 
-            if (init)
-                list = genNodeTAC(init, list);
-            char *labelStart = newLabel();
-            char *labelFalse = newLabel();
-            char *labelStep = newLabel();
+        /* Libere o o labelStart, que não está armazenado na pilha!!!*/
+        free(labelStart);
 
-            breakLabelStack[loopDepth] = labelFalse;
-            continueLabelStack[loopDepth] = labelStep;
-            loopDepth++;
+        loopDepth--;
+        free(breakLabelStack[loopDepth]);
+        free(continueLabelStack[loopDepth]);
 
-            list = insertTAC(list, createTAC("label", "", "", labelStart));
+        return list;
+    }
 
-            if (cond) {
-                char *condTemp = genExprTAC(cond, &list);
-                list = insertTAC(list, createTAC("ifz", condTemp, "", labelFalse));
-                free(condTemp);
-            }
+    case AST_FUNC:
+        list = insertTAC(list,
+                         createTAC("func", node->name,
+                                   node->op, ""));
+        genFormalParamsTAC(node->children[0], &list);
+        list = genNodeTAC(node->children[1], list);
+        list = insertTAC(list,
+                         createTAC("endfunc", node->name,
+                                   "", ""));
+        return list;
 
-            list = genNodeTAC(body, list);
+    case AST_CALL:
+    {
+        char *value = genCallTAC(node, &list, 0);
+        free(value);
+        return list;
+    }
 
-            list = insertTAC(list, createTAC("label", "", "", labelStep));
-
-            if (step)
-                list = genNodeTAC(step, list);
-
-            list = insertTAC(list, createTAC("goto", "", "", labelStart));
-
-            list = insertTAC(list, createTAC("label", "", "", labelFalse));
-
-            /* Libera o labelStart, que não está armazenado na pilha. */
-            free(labelStart);
-
-            loopDepth--;
-            free(breakLabelStack[loopDepth]);
-            free(continueLabelStack[loopDepth]);
-
-            return list;
+    case AST_RETURN:
+    {
+        if (node->child_count == 1)
+        {
+            char *vbuf = genExprTAC(node->children[0], &list);
+            TAC *r = createTAC("ret", vbuf ? vbuf : "", "", "");
+            list = insertTAC(list, r);
+            free(vbuf);
         }
-
-        case AST_DO_WHILE: {
-            NodeAST *body = node->children[0];
-            NodeAST *cond = node->children[1];
-
-            char *labelStart = newLabel();
-            char *labelCond = newLabel();
-            char *labelFalse = newLabel();
-
-            
-            breakLabelStack[loopDepth] = labelFalse;
-            continueLabelStack[loopDepth] = labelCond;
-            loopDepth++;
-
-            list = insertTAC(list, createTAC("label", "", "", labelStart));
-
-            list = genNodeTAC(body, list);
-
-            /* Rótulo da condição: avaliar a condição aqui!! */
-            list = insertTAC(list, createTAC("label", "", "", labelCond));
-
-            if (cond) {
-                char *condTemp = genExprTAC(cond, &list);
-                list = insertTAC(list, createTAC("ifz", condTemp, "", labelFalse));
-                list = insertTAC(list, createTAC("goto", "", "", labelStart));
-                free(condTemp);
-            }
-
-            list = insertTAC(list, createTAC("label", "", "", labelFalse));
-
-            /* Libere o o labelStart, que não está armazenado na pilha!!!*/
-            free(labelStart);
-
-            loopDepth--;
-            free(breakLabelStack[loopDepth]);
-            free(continueLabelStack[loopDepth]);
-
-            return list;
+        else
+        {
+            TAC *r = createTAC("ret", "", "", "");
+            list = insertTAC(list, r);
         }
+        return list;
+    }
 
-        case AST_FUNC:
-            list = insertTAC(list,
-                             createTAC("func", node->name,
-                                       node->op, ""));
-            genFormalParamsTAC(node->children[0], &list);
-            list = genNodeTAC(node->children[1], list);
-            list = insertTAC(list,
-                             createTAC("endfunc", node->name,
-                                       "", ""));
-            return list;
-
-        case AST_CALL: {
-            char *value = genCallTAC(node, &list, 0);
-            free(value);
-            return list;
-        }
-
-        case AST_RETURN: {
-            if (node->child_count == 1) {
-                char *vbuf = genExprTAC(node->children[0], &list);
-                TAC *r = createTAC("ret", vbuf ? vbuf : "", "", "");
-                list = insertTAC(list, r);
-                free(vbuf);
-            } else {
-                TAC *r = createTAC("ret", "", "", "");
-                list = insertTAC(list, r);
-            }
-            return list;
-        }
-
-        default:
-            return list;
+    default:
+        return list;
     }
 }
 
-void generateTAC(NodeAST *root) {
+void generateTAC(NodeAST *root)
+{
     TAC *list = NULL;
     list = genNodeTAC(root, list);
+
+    /* Optionally run TAC optimizations. Use environment variable OPTIMIZE_TAC=1 to enable. */
+    char *opt = getenv("OPTIMIZE_TAC");
+    if (opt && strcmp(opt, "1") == 0)
+    {
+        TAC *opted = optimizeTAC(list);
+        if (opted)
+        {
+            freeTAC(list);
+            list = opted;
+        }
+    }
 
     printf("--- TAC emitted (basic) ---\n");
     printTAC(list);
@@ -990,133 +1080,374 @@ void generateTAC(NodeAST *root) {
     freeTAC(list);
 }
 
-char *genExprPython(NodeAST *expr) {
-    if (!expr) return strdup("");
+/* Helper: check if string represents integer constant */
+static int isIntConst(const char *s)
+{
+    if (!s || !s[0])
+        return 0;
+    char *p = (char *)s;
+    if (*p == '-' || *p == '+')
+        p++;
+    int has = 0;
+    while (*p)
+    {
+        if (*p < '0' || *p > '9')
+            return 0;
+        has = 1;
+        p++;
+    }
+    return has;
+}
 
-    switch (expr->type) {
-        case AST_NUM: {
-            char buffer[32];
-            snprintf(buffer, sizeof(buffer), "%d", expr->value);
-            return strdup(buffer);
-        }
-        
-        case AST_FLOAT: {
-            char buffer[64];
-            snprintf(buffer, sizeof(buffer), "%f", expr->floatValue);
-            return strdup(buffer);
-        }
-        
-        case AST_ID:
-            return strdup(expr->name);
-        
-        case AST_BINOP: {
-            char *left = genExprPython(expr->children[0]);
-            char *right = genExprPython(expr->children[1]);
+/* Very small expression evaluator for integer binary ops. Returns 1 if folded and writes result to out (allocated strdup) */
+static int tryFoldBinary(const char *op, const char *a1, const char *a2, char **out)
+{
+    if (!isIntConst(a1) || !isIntConst(a2))
+        return 0;
+    long v1 = strtol(a1, NULL, 10);
+    long v2 = strtol(a2, NULL, 10);
+    long r = 0;
+    if (strcmp(op, "+") == 0)
+        r = v1 + v2;
+    else if (strcmp(op, "-") == 0)
+        r = v1 - v2;
+    else if (strcmp(op, "*") == 0)
+        r = v1 * v2;
+    else if (strcmp(op, "/") == 0)
+    {
+        if (v2 == 0)
+            return 0;
+        r = v1 / v2;
+    }
+    else if (strcmp(op, "<") == 0)
+        r = v1 < v2;
+    else if (strcmp(op, ">") == 0)
+        r = v1 > v2;
+    else if (strcmp(op, "<=") == 0)
+        r = v1 <= v2;
+    else if (strcmp(op, ">=") == 0)
+        r = v1 >= v2;
+    else if (strcmp(op, "==") == 0)
+        r = v1 == v2;
+    else if (strcmp(op, "!=") == 0)
+        r = v1 != v2;
+    else
+        return 0;
+    char buf[64];
+    snprintf(buf, sizeof(buf), "%ld", r);
+    *out = strdup(buf);
+    return 1;
+}
 
-            const char *pyOp = expr->op;
-            if (strcmp(expr->op, "&&") == 0) {
-                pyOp = "and";
-            } else if (strcmp(expr->op, "||") == 0) {
-                pyOp = "or";
+/* Count uses of temporaries (names starting with 't') */
+static int isTempName(const char *s) { return s && s[0] == 't'; }
+
+TAC *optimizeTAC(TAC *list)
+{
+    if (!list)
+        return NULL;
+    /* First pass: constant folding. Replace binary ops on constants with = const */
+    for (TAC *p = list; p; p = p->next)
+    {
+        if (p->op[0] != '\0' && strcmp(p->op, "=") != 0 && strcmp(p->op, "call") != 0 && strcmp(p->op, "param") != 0 && strcmp(p->op, "fparam") != 0 && strcmp(p->op, "ifz") != 0 && strcmp(p->op, "goto") != 0 && strcmp(p->op, "label") != 0 && strcmp(p->op, "ret") != 0 && strcmp(p->op, "func") != 0 && strcmp(p->op, "endfunc") != 0)
+        {
+            char *folded = NULL;
+            if (tryFoldBinary(p->op, p->arg1, p->arg2, &folded))
+            {
+                /* convert to assignment */
+                strncpy(p->op, "=", sizeof(p->op) - 1);
+                strncpy(p->arg1, folded, sizeof(p->arg1) - 1);
+                p->arg2[0] = '\0';
+                free(folded);
             }
+        }
+    }
 
-            size_t size = strlen(left) + strlen(pyOp) + strlen(right) + 6;
-            char *result = malloc(size);
+    /* Second pass: constant propagation for temporaries. Build map of definitions, then replace uses. */
+    /* For simplicity, only propagate assignments of constants to temps: tX = CONST */
+    typedef struct Def
+    {
+        char *name;
+        char *val;
+        struct Def *next;
+    } Def;
+    Def *defs = NULL;
 
-            if (result) {
-                snprintf(result, size, "(%s %s %s)", left, pyOp, right);
+    for (TAC *p = list; p; p = p->next)
+    {
+        if (strcmp(p->op, "=") == 0 && isTempName(p->result) && isIntConst(p->arg1) && p->arg2[0] == 0)
+        {
+            Def *d = malloc(sizeof(Def));
+            d->name = strdup(p->result);
+            d->val = strdup(p->arg1);
+            d->next = defs;
+            defs = d;
+        }
+        else if (p->arg1[0] && isTempName(p->arg1))
+        {
+            /* replace arg1 if we have a def */
+            for (Def *d = defs; d; d = d->next)
+            {
+                if (strcmp(d->name, p->arg1) == 0)
+                {
+                    strncpy(p->arg1, d->val, sizeof(p->arg1) - 1);
+                    break;
+                }
             }
+        }
+        if (p->arg2[0] && isTempName(p->arg2))
+        {
+            for (Def *d = defs; d; d = d->next)
+            {
+                if (strcmp(d->name, p->arg2) == 0)
+                {
+                    strncpy(p->arg2, d->val, sizeof(p->arg2) - 1);
+                    break;
+                }
+            }
+        }
+    }
 
+    /* free defs list */
+    while (defs)
+    {
+        Def *n = defs->next;
+        free(defs->name);
+        free(defs->val);
+        free(defs);
+        defs = n;
+    }
+
+    /* Third pass: dead code elimination for temporaries: remove assignments to temps that are never used later. Conservative single-pass mark-and-sweep.
+       Compute usage counts. */
+    /* Build usage map */
+    typedef struct Use
+    {
+        char *name;
+        int count;
+        struct Use *next;
+    } Use;
+    Use *uses = NULL;
+    for (TAC *p = list; p; p = p->next)
+    {
+        if (p->arg1[0] && isTempName(p->arg1))
+        {
+            Use *u = uses;
+            while (u && strcmp(u->name, p->arg1) != 0)
+                u = u->next;
+            if (!u)
+            {
+                u = malloc(sizeof(Use));
+                u->name = strdup(p->arg1);
+                u->count = 0;
+                u->next = uses;
+                uses = u;
+            }
+            u->count++;
+        }
+        if (p->arg2[0] && isTempName(p->arg2))
+        {
+            Use *u = uses;
+            while (u && strcmp(u->name, p->arg2) != 0)
+                u = u->next;
+            if (!u)
+            {
+                u = malloc(sizeof(Use));
+                u->name = strdup(p->arg2);
+                u->count = 0;
+                u->next = uses;
+                uses = u;
+            }
+            u->count++;
+        }
+    }
+
+    /* Remove nodes that are assignments to temps with zero uses. We'll rebuild list into new list. */
+    TAC *newList = NULL;
+    for (TAC *p = list; p; p = p->next)
+    {
+        int drop = 0;
+        if (strcmp(p->op, "=") == 0 && isTempName(p->result))
+        {
+            /* does result appear in uses? */
+            Use *u = uses;
+            while (u && strcmp(u->name, p->result) != 0)
+                u = u->next;
+            if (!u)
+                drop = 1;
+        }
+        if (!drop)
+        {
+            /* clone node */
+            TAC *c = createTAC(p->op, p->arg1, p->arg2, p->result);
+            newList = insertTAC(newList, c);
+        }
+    }
+
+    /* free uses */
+    while (uses)
+    {
+        Use *n = uses->next;
+        free(uses->name);
+        free(uses);
+        uses = n;
+    }
+
+    return newList;
+}
+
+char *genExprPython(NodeAST *expr)
+{
+    if (!expr)
+        return strdup("");
+
+    switch (expr->type)
+    {
+    case AST_NUM:
+    {
+        char buffer[32];
+        snprintf(buffer, sizeof(buffer), "%d", expr->value);
+        return strdup(buffer);
+    }
+
+    case AST_FLOAT:
+    {
+        char buffer[64];
+        snprintf(buffer, sizeof(buffer), "%f", expr->floatValue);
+        return strdup(buffer);
+    }
+
+    case AST_ID:
+        return strdup(expr->name);
+
+    case AST_BINOP:
+    {
+        char *left = genExprPython(expr->children[0]);
+        char *right = genExprPython(expr->children[1]);
+
+        const char *pyOp = expr->op;
+        if (strcmp(expr->op, "&&") == 0)
+        {
+            pyOp = "and";
+        }
+        else if (strcmp(expr->op, "||") == 0)
+        {
+            pyOp = "or";
+        }
+
+        size_t size = strlen(left) + strlen(pyOp) + strlen(right) + 6;
+        char *result = malloc(size);
+
+        if (result)
+        {
+            snprintf(result, size, "(%s %s %s)", left, pyOp, right);
+        }
+
+        free(left);
+        free(right);
+
+        return result;
+    }
+
+    case AST_UNOP:
+    {
+        char *child = genExprPython(expr->children[0]);
+
+        const char *pyOp = expr->op;
+        if (strcmp(expr->op, "!") == 0)
+        {
+            pyOp = "not ";
+        }
+
+        size_t size = strlen(pyOp) + strlen(child) + 4;
+        char *result = malloc(size);
+
+        if (result)
+        {
+            snprintf(result, size, "(%s%s)", pyOp, child);
+        }
+
+        free(child);
+        return result;
+    }
+
+    case AST_CALL:
+    {
+        char *args = genExprPython(expr->children[0]);
+
+        size_t size = strlen(expr->name) + strlen(args) + 3;
+        char *result = malloc(size);
+
+        if (result)
+        {
+            snprintf(result, size, "%s(%s)", expr->name, args);
+        }
+
+        free(args);
+        return result;
+    }
+
+    case AST_SEQ:
+    {
+        char *left = genExprPython(expr->children[0]);
+        char *right = genExprPython(expr->children[1]);
+
+        if (strlen(left) == 0)
+        {
             free(left);
+            return right;
+        }
+        if (strlen(right) == 0)
+        {
             free(right);
-
-            return result;
+            return left;
         }
 
-        case AST_UNOP: {
-            char *child = genExprPython(expr->children[0]);
+        size_t size = strlen(left) + strlen(right) + 3;
+        char *result = malloc(size);
 
-            const char *pyOp = expr->op;
-            if (strcmp(expr->op, "!") == 0) {
-                pyOp = "not ";
-            }
-
-            size_t size = strlen(pyOp) + strlen(child) + 4;
-            char *result = malloc(size);
-
-            if (result) {
-                snprintf(result, size, "(%s%s)", pyOp, child);
-            }
-
-            free(child);
-            return result;
+        if (result)
+        {
+            snprintf(result, size, "%s, %s", left, right);
         }
 
-        case AST_CALL: {
-            char *args = genExprPython(expr->children[0]);
+        free(left);
+        free(right);
+        return result;
+    }
 
-            size_t size = strlen(expr->name) + strlen(args) + 3;
-            char *result = malloc(size);
-
-            if (result) {
-                snprintf(result, size, "%s(%s)", expr->name, args);
-            }
-
-            free(args);
-            return result;
-        }
-
-        case AST_SEQ: {
-            char *left = genExprPython(expr->children[0]);
-            char *right = genExprPython(expr->children[1]);
-
-            if (strlen(left) == 0) {
-                free(left);
-                return right;
-            }
-            if (strlen(right) == 0) {
-                free(right);
-                return left;
-            }
-
-            size_t size = strlen(left) + strlen(right) + 3;
-            char *result = malloc(size);
-
-            if (result) {
-                snprintf(result, size, "%s, %s", left, right);
-            }
-
-            free(left);
-            free(right);
-            return result;
-        }
-
-        default:
-            return strdup("");
+    default:
+        return strdup("");
     }
 }
 
-void genNodePython(NodeAST *node, FILE *out) {
-    if (!node) return;
+void genNodePython(NodeAST *node, FILE *out)
+{
+    if (!node)
+        return;
 
-    switch (node->type) {
-        case AST_SEQ:
-            genNodePython(node->children[0], out);
-            genNodePython(node->children[1], out);
-            break;
-        default:
-            break;
+    switch (node->type)
+    {
+    case AST_SEQ:
+        genNodePython(node->children[0], out);
+        genNodePython(node->children[1], out);
+        break;
+    default:
+        break;
     }
 }
 
-void generatePythonFile(NodeAST *root, char *filename) {
-    if (!root) {
+void generatePythonFile(NodeAST *root, char *filename)
+{
+    if (!root)
+    {
         printf("Aviso: AST vazia, nenhum código Python gerado.\n");
         return;
     }
 
     FILE *file = fopen(filename, "w");
-    if (!file) {
+    if (!file)
+    {
         fprintf(stderr, "Erro: Não foi possível criar ou abrir o arquivo %s.\n", filename);
         return;
     }
@@ -1125,6 +1456,6 @@ void generatePythonFile(NodeAST *root, char *filename) {
 
     genNodePython(root, file);
     fclose(file);
-    
+
     printf("SUCESSO: Arquivo '%s' gerado com sucesso!\n", filename);
 }
