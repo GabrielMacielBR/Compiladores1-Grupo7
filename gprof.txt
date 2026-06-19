@@ -1,0 +1,411 @@
+Flat profile:
+
+Each sample counts as 0.01 seconds.
+ no time accumulated
+
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls  Ts/call  Ts/call  name    
+  0.00      0.00     0.00      200     0.00     0.00  yylex
+  0.00      0.00     0.00       95     0.00     0.00  searchSymbol
+  0.00      0.00     0.00       70     0.00     0.00  createTAC
+  0.00      0.00     0.00       59     0.00     0.00  getSymbolType
+  0.00      0.00     0.00       46     0.00     0.00  createNodeId
+  0.00      0.00     0.00       34     0.00     0.00  createNodeSeq
+  0.00      0.00     0.00       26     0.00     0.00  genExprTAC
+  0.00      0.00     0.00       20     0.00     0.00  searchFunction
+  0.00      0.00     0.00       18     0.00     0.00  createNodeNum
+  0.00      0.00     0.00       16     0.00     0.00  createNodeBinOp
+  0.00      0.00     0.00       13     0.00     0.00  createNodeAssign
+  0.00      0.00     0.00       13     0.00     0.00  isAssignable
+  0.00      0.00     0.00       10     0.00     0.00  createNodeDecl
+  0.00      0.00     0.00       10     0.00     0.00  insertSymbol
+  0.00      0.00     0.00       10     0.00     0.00  popScope
+  0.00      0.00     0.00       10     0.00     0.00  pushScope
+  0.00      0.00     0.00       10     0.00     0.00  searchSymbolInCurrentScope
+  0.00      0.00     0.00        7     0.00     0.00  printAST
+  0.00      0.00     0.00        7     0.00     0.00  printTable
+  0.00      0.00     0.00        4     0.00     0.00  checkFunctionCallArgs
+  0.00      0.00     0.00        4     0.00     0.00  createNodeCall
+  0.00      0.00     0.00        4     0.00     0.00  createNodeFunc
+  0.00      0.00     0.00        4     0.00     0.00  createNodeReturn
+  0.00      0.00     0.00        4     0.00     0.00  genCallTAC
+  0.00      0.00     0.00        4     0.00     0.00  genFormalParamsTAC
+  0.00      0.00     0.00        4     0.00     0.00  getFunctionAst
+  0.00      0.00     0.00        4     0.00     0.00  insertFunction
+  0.00      0.00     0.00        4     0.00     0.00  isConditionValid
+  0.00      0.00     0.00        4     0.00     0.00  setFunctionAst
+  0.00      0.00     0.00        2     0.00     0.00  createNodeFor
+  0.00      0.00     0.00        2     0.00     0.00  createNodeWhile
+  0.00      0.00     0.00        2     0.00     0.00  genArgsTAC
+  0.00      0.00     0.00        2     0.00     0.00  yy_flush_buffer
+  0.00      0.00     0.00        2     0.00     0.00  yy_get_previous_state
+  0.00      0.00     0.00        2     0.00     0.00  yy_init_buffer
+  0.00      0.00     0.00        1     0.00     0.00  freeTable
+  0.00      0.00     0.00        1     0.00     0.00  genNodePython
+  0.00      0.00     0.00        1     0.00     0.00  genNodeTAC
+  0.00      0.00     0.00        1     0.00     0.00  generatePythonFile
+  0.00      0.00     0.00        1     0.00     0.00  generateTAC
+  0.00      0.00     0.00        1     0.00     0.00  initTable
+  0.00      0.00     0.00        1     0.00     0.00  printTAC
+  0.00      0.00     0.00        1     0.00     0.00  yy_create_buffer
+  0.00      0.00     0.00        1     0.00     0.00  yyensure_buffer_stack
+  0.00      0.00     0.00        1     0.00     0.00  yyparse
+  0.00      0.00     0.00        1     0.00     0.00  yyrestart
+
+ %         the percentage of the total running time of the
+time       program used by this function.
+
+cumulative a running sum of the number of seconds accounted
+ seconds   for by this function and those listed above it.
+
+ self      the number of seconds accounted for by this
+seconds    function alone.  This is the major sort for this
+           listing.
+
+calls      the number of times this function was invoked, if
+           this function is profiled, else blank.
+
+ self      the average number of milliseconds spent in this
+ms/call    function per call, if this function is profiled,
+	   else blank.
+
+ total     the average number of milliseconds spent in this
+ms/call    function and its descendents per call, if this
+	   function is profiled, else blank.
+
+name       the name of the function.  This is the minor sort
+           for this listing. The index shows the location of
+	   the function in the gprof listing. If the index is
+	   in parenthesis it shows where it would appear in
+	   the gprof listing if it were to be printed.
+
+Copyright (C) 2012-2022 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+		     Call graph (explanation follows)
+
+
+granularity: each sample hit covers 4 byte(s) no time propagated
+
+index % time    self  children    called     name
+                0.00    0.00     200/200         yyparse [45]
+[1]      0.0    0.00    0.00     200         yylex [1]
+                0.00    0.00       2/2           yy_get_previous_state [34]
+                0.00    0.00       1/1           yyensure_buffer_stack [44]
+                0.00    0.00       1/1           yy_create_buffer [43]
+                0.00    0.00       1/1           yyrestart [46]
+-----------------------------------------------
+                0.00    0.00      36/95          yyparse [45]
+                0.00    0.00      59/95          getSymbolType [4]
+[2]      0.0    0.00    0.00      95         searchSymbol [2]
+-----------------------------------------------
+                0.00    0.00       2/70          genFormalParamsTAC [25]
+                0.00    0.00       4/70          genArgsTAC [32]
+                0.00    0.00       4/70          genCallTAC [24]
+                0.00    0.00      16/70          genExprTAC [7]
+                0.00    0.00      44/70          genNodeTAC [38]
+[3]      0.0    0.00    0.00      70         createTAC [3]
+-----------------------------------------------
+                0.00    0.00      13/59          yyparse [45]
+                0.00    0.00      46/59          createNodeId [5]
+[4]      0.0    0.00    0.00      59         getSymbolType [4]
+                0.00    0.00      59/95          searchSymbol [2]
+-----------------------------------------------
+                0.00    0.00      46/46          yyparse [45]
+[5]      0.0    0.00    0.00      46         createNodeId [5]
+                0.00    0.00      46/59          getSymbolType [4]
+-----------------------------------------------
+                0.00    0.00      34/34          yyparse [45]
+[6]      0.0    0.00    0.00      34         createNodeSeq [6]
+-----------------------------------------------
+                                  32             genExprTAC [7]
+                0.00    0.00       4/26          genArgsTAC [32]
+                0.00    0.00      22/26          genNodeTAC [38]
+[7]      0.0    0.00    0.00      26+32      genExprTAC [7]
+                0.00    0.00      16/70          createTAC [3]
+                                  32             genExprTAC [7]
+-----------------------------------------------
+                0.00    0.00       4/20          createNodeCall [21]
+                0.00    0.00       4/20          setFunctionAst [29]
+                0.00    0.00       4/20          getFunctionAst [26]
+                0.00    0.00       8/20          yyparse [45]
+[8]      0.0    0.00    0.00      20         searchFunction [8]
+-----------------------------------------------
+                0.00    0.00      18/18          yyparse [45]
+[9]      0.0    0.00    0.00      18         createNodeNum [9]
+-----------------------------------------------
+                0.00    0.00      16/16          yyparse [45]
+[10]     0.0    0.00    0.00      16         createNodeBinOp [10]
+-----------------------------------------------
+                0.00    0.00      13/13          yyparse [45]
+[11]     0.0    0.00    0.00      13         createNodeAssign [11]
+-----------------------------------------------
+                0.00    0.00      13/13          yyparse [45]
+[12]     0.0    0.00    0.00      13         isAssignable [12]
+-----------------------------------------------
+                0.00    0.00      10/10          yyparse [45]
+[13]     0.0    0.00    0.00      10         createNodeDecl [13]
+-----------------------------------------------
+                0.00    0.00      10/10          yyparse [45]
+[14]     0.0    0.00    0.00      10         insertSymbol [14]
+-----------------------------------------------
+                0.00    0.00      10/10          yyparse [45]
+[15]     0.0    0.00    0.00      10         popScope [15]
+-----------------------------------------------
+                0.00    0.00      10/10          yyparse [45]
+[16]     0.0    0.00    0.00      10         pushScope [16]
+-----------------------------------------------
+                0.00    0.00      10/10          yyparse [45]
+[17]     0.0    0.00    0.00      10         searchSymbolInCurrentScope [17]
+-----------------------------------------------
+                                 112             printAST [18]
+                0.00    0.00       7/7           yyparse [45]
+[18]     0.0    0.00    0.00       7+112     printAST [18]
+                                 112             printAST [18]
+-----------------------------------------------
+                0.00    0.00       7/7           yyparse [45]
+[19]     0.0    0.00    0.00       7         printTable [19]
+-----------------------------------------------
+                0.00    0.00       4/4           yyparse [45]
+[20]     0.0    0.00    0.00       4         checkFunctionCallArgs [20]
+                0.00    0.00       4/4           getFunctionAst [26]
+-----------------------------------------------
+                0.00    0.00       4/4           yyparse [45]
+[21]     0.0    0.00    0.00       4         createNodeCall [21]
+                0.00    0.00       4/20          searchFunction [8]
+-----------------------------------------------
+                0.00    0.00       4/4           yyparse [45]
+[22]     0.0    0.00    0.00       4         createNodeFunc [22]
+-----------------------------------------------
+                0.00    0.00       4/4           yyparse [45]
+[23]     0.0    0.00    0.00       4         createNodeReturn [23]
+-----------------------------------------------
+                0.00    0.00       4/4           genNodeTAC [38]
+[24]     0.0    0.00    0.00       4         genCallTAC [24]
+                0.00    0.00       4/70          createTAC [3]
+                0.00    0.00       2/2           genArgsTAC [32]
+-----------------------------------------------
+                                   1             genFormalParamsTAC [25]
+                0.00    0.00       4/4           genNodeTAC [38]
+[25]     0.0    0.00    0.00       4+1       genFormalParamsTAC [25]
+                0.00    0.00       2/70          createTAC [3]
+                                   1             genFormalParamsTAC [25]
+-----------------------------------------------
+                0.00    0.00       4/4           checkFunctionCallArgs [20]
+[26]     0.0    0.00    0.00       4         getFunctionAst [26]
+                0.00    0.00       4/20          searchFunction [8]
+-----------------------------------------------
+                0.00    0.00       4/4           yyparse [45]
+[27]     0.0    0.00    0.00       4         insertFunction [27]
+-----------------------------------------------
+                0.00    0.00       4/4           yyparse [45]
+[28]     0.0    0.00    0.00       4         isConditionValid [28]
+-----------------------------------------------
+                0.00    0.00       4/4           yyparse [45]
+[29]     0.0    0.00    0.00       4         setFunctionAst [29]
+                0.00    0.00       4/20          searchFunction [8]
+-----------------------------------------------
+                0.00    0.00       2/2           yyparse [45]
+[30]     0.0    0.00    0.00       2         createNodeFor [30]
+-----------------------------------------------
+                0.00    0.00       2/2           yyparse [45]
+[31]     0.0    0.00    0.00       2         createNodeWhile [31]
+-----------------------------------------------
+                                   2             genArgsTAC [32]
+                0.00    0.00       2/2           genCallTAC [24]
+[32]     0.0    0.00    0.00       2+2       genArgsTAC [32]
+                0.00    0.00       4/26          genExprTAC [7]
+                0.00    0.00       4/70          createTAC [3]
+                                   2             genArgsTAC [32]
+-----------------------------------------------
+                0.00    0.00       2/2           yy_init_buffer [35]
+[33]     0.0    0.00    0.00       2         yy_flush_buffer [33]
+-----------------------------------------------
+                0.00    0.00       2/2           yylex [1]
+[34]     0.0    0.00    0.00       2         yy_get_previous_state [34]
+-----------------------------------------------
+                0.00    0.00       1/2           yy_create_buffer [43]
+                0.00    0.00       1/2           yyrestart [46]
+[35]     0.0    0.00    0.00       2         yy_init_buffer [35]
+                0.00    0.00       2/2           yy_flush_buffer [33]
+-----------------------------------------------
+                0.00    0.00       1/1           main [65]
+[36]     0.0    0.00    0.00       1         freeTable [36]
+-----------------------------------------------
+                0.00    0.00       1/1           generatePythonFile [39]
+[37]     0.0    0.00    0.00       1         genNodePython [37]
+-----------------------------------------------
+                                  58             genNodeTAC [38]
+                0.00    0.00       1/1           generateTAC [40]
+[38]     0.0    0.00    0.00       1+58      genNodeTAC [38]
+                0.00    0.00      44/70          createTAC [3]
+                0.00    0.00      22/26          genExprTAC [7]
+                0.00    0.00       4/4           genCallTAC [24]
+                0.00    0.00       4/4           genFormalParamsTAC [25]
+                                  58             genNodeTAC [38]
+-----------------------------------------------
+                0.00    0.00       1/1           main [65]
+[39]     0.0    0.00    0.00       1         generatePythonFile [39]
+                0.00    0.00       1/1           genNodePython [37]
+-----------------------------------------------
+                0.00    0.00       1/1           main [65]
+[40]     0.0    0.00    0.00       1         generateTAC [40]
+                0.00    0.00       1/1           genNodeTAC [38]
+                0.00    0.00       1/1           printTAC [42]
+-----------------------------------------------
+                0.00    0.00       1/1           main [65]
+[41]     0.0    0.00    0.00       1         initTable [41]
+-----------------------------------------------
+                0.00    0.00       1/1           generateTAC [40]
+[42]     0.0    0.00    0.00       1         printTAC [42]
+-----------------------------------------------
+                0.00    0.00       1/1           yylex [1]
+[43]     0.0    0.00    0.00       1         yy_create_buffer [43]
+                0.00    0.00       1/2           yy_init_buffer [35]
+-----------------------------------------------
+                0.00    0.00       1/1           yylex [1]
+[44]     0.0    0.00    0.00       1         yyensure_buffer_stack [44]
+-----------------------------------------------
+                0.00    0.00       1/1           main [65]
+[45]     0.0    0.00    0.00       1         yyparse [45]
+                0.00    0.00     200/200         yylex [1]
+                0.00    0.00      46/46          createNodeId [5]
+                0.00    0.00      36/95          searchSymbol [2]
+                0.00    0.00      34/34          createNodeSeq [6]
+                0.00    0.00      18/18          createNodeNum [9]
+                0.00    0.00      16/16          createNodeBinOp [10]
+                0.00    0.00      13/59          getSymbolType [4]
+                0.00    0.00      13/13          isAssignable [12]
+                0.00    0.00      13/13          createNodeAssign [11]
+                0.00    0.00      10/10          pushScope [16]
+                0.00    0.00      10/10          popScope [15]
+                0.00    0.00      10/10          createNodeDecl [13]
+                0.00    0.00      10/10          searchSymbolInCurrentScope [17]
+                0.00    0.00      10/10          insertSymbol [14]
+                0.00    0.00       8/20          searchFunction [8]
+                0.00    0.00       7/7           printAST [18]
+                0.00    0.00       7/7           printTable [19]
+                0.00    0.00       4/4           insertFunction [27]
+                0.00    0.00       4/4           createNodeFunc [22]
+                0.00    0.00       4/4           setFunctionAst [29]
+                0.00    0.00       4/4           createNodeReturn [23]
+                0.00    0.00       4/4           checkFunctionCallArgs [20]
+                0.00    0.00       4/4           createNodeCall [21]
+                0.00    0.00       4/4           isConditionValid [28]
+                0.00    0.00       2/2           createNodeWhile [31]
+                0.00    0.00       2/2           createNodeFor [30]
+-----------------------------------------------
+                0.00    0.00       1/1           yylex [1]
+[46]     0.0    0.00    0.00       1         yyrestart [46]
+                0.00    0.00       1/2           yy_init_buffer [35]
+-----------------------------------------------
+
+ This table describes the call tree of the program, and was sorted by
+ the total amount of time spent in each function and its children.
+
+ Each entry in this table consists of several lines.  The line with the
+ index number at the left hand margin lists the current function.
+ The lines above it list the functions that called this function,
+ and the lines below it list the functions this one called.
+ This line lists:
+     index	A unique number given to each element of the table.
+		Index numbers are sorted numerically.
+		The index number is printed next to every function name so
+		it is easier to look up where the function is in the table.
+
+     % time	This is the percentage of the `total' time that was spent
+		in this function and its children.  Note that due to
+		different viewpoints, functions excluded by options, etc,
+		these numbers will NOT add up to 100%.
+
+     self	This is the total amount of time spent in this function.
+
+     children	This is the total amount of time propagated into this
+		function by its children.
+
+     called	This is the number of times the function was called.
+		If the function called itself recursively, the number
+		only includes non-recursive calls, and is followed by
+		a `+' and the number of recursive calls.
+
+     name	The name of the current function.  The index number is
+		printed after it.  If the function is a member of a
+		cycle, the cycle number is printed between the
+		function's name and the index number.
+
+
+ For the function's parents, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the function into this parent.
+
+     children	This is the amount of time that was propagated from
+		the function's children into this parent.
+
+     called	This is the number of times this parent called the
+		function `/' the total number of times the function
+		was called.  Recursive calls to the function are not
+		included in the number after the `/'.
+
+     name	This is the name of the parent.  The parent's index
+		number is printed after it.  If the parent is a
+		member of a cycle, the cycle number is printed between
+		the name and the index number.
+
+ If the parents of the function cannot be determined, the word
+ `<spontaneous>' is printed in the `name' field, and all the other
+ fields are blank.
+
+ For the function's children, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the child into the function.
+
+     children	This is the amount of time that was propagated from the
+		child's children to the function.
+
+     called	This is the number of times the function called
+		this child `/' the total number of times the child
+		was called.  Recursive calls by the child are not
+		listed in the number after the `/'.
+
+     name	This is the name of the child.  The child's index
+		number is printed after it.  If the child is a
+		member of a cycle, the cycle number is printed
+		between the name and the index number.
+
+ If there are any cycles (circles) in the call graph, there is an
+ entry for the cycle-as-a-whole.  This entry shows who called the
+ cycle (as parents) and the members of the cycle (as children.)
+ The `+' recursive calls entry shows the number of function calls that
+ were internal to the cycle, and the calls entry for each member shows,
+ for that member, how many times it was called from other members of
+ the cycle.
+
+Copyright (C) 2012-2022 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+Index by function name
+
+  [20] checkFunctionCallArgs   [7] genExprTAC (ast.c)     [19] printTable
+  [11] createNodeAssign       [25] genFormalParamsTAC (ast.c) [16] pushScope
+  [10] createNodeBinOp        [37] genNodePython           [8] searchFunction
+  [21] createNodeCall         [38] genNodeTAC (ast.c)      [2] searchSymbol
+  [13] createNodeDecl         [39] generatePythonFile     [17] searchSymbolInCurrentScope
+  [30] createNodeFor          [40] generateTAC            [29] setFunctionAst
+  [22] createNodeFunc         [26] getFunctionAst         [43] yy_create_buffer
+   [5] createNodeId            [4] getSymbolType          [33] yy_flush_buffer
+   [9] createNodeNum          [41] initTable              [34] yy_get_previous_state (lex.yy.c)
+  [23] createNodeReturn       [27] insertFunction         [35] yy_init_buffer (lex.yy.c)
+   [6] createNodeSeq          [14] insertSymbol           [44] yyensure_buffer_stack (lex.yy.c)
+  [31] createNodeWhile        [12] isAssignable            [1] yylex
+   [3] createTAC              [28] isConditionValid       [45] yyparse
+  [36] freeTable              [15] popScope               [46] yyrestart
+  [32] genArgsTAC (ast.c)     [18] printAST
+  [24] genCallTAC (ast.c)     [42] printTAC
