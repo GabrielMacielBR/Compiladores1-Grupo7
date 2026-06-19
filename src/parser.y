@@ -675,6 +675,9 @@ int main(void) {
     int ret = yyparse();
   if (root) {
     printf("INFO: Gerando TAC a partir da AST...\n");
+    printf("\n===== AST FINAL =====\n");
+    printAST(root, 0);
+    printf("\n=====================\n");
     generateTAC(root);
     generatePythonFile(root, "result.py");
   }
