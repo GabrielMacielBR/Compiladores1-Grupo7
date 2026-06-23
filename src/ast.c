@@ -1050,6 +1050,36 @@ static TAC *genNodeTAC(NodeAST *node, TAC *list)
         }
         return list;
     }
+    case AST_BREAK:
+    {
+        if (loopDepth > 0)
+        {
+            list = insertTAC(
+                list,
+                createTAC(
+                    "goto",
+                    "",
+                    "",
+                    breakLabelStack[loopDepth - 1]));
+        }
+
+        return list;
+    }
+    case AST_CONTINUE:
+    {
+        if (loopDepth > 0)
+        {
+            list = insertTAC(
+                list,
+                createTAC(
+                    "goto",
+                    "",
+                    "",
+                    continueLabelStack[loopDepth - 1]));
+        }
+
+        return list;
+    }
 
     default:
         return list;
@@ -1421,7 +1451,15 @@ char *genExprPython(NodeAST *expr)
     }
 }
 
-void genNodePython(NodeAST *node, FILE *out)
+static void printIndent(FILE *out, int level)
+{
+    for (int i = 0; i < level; i++)
+    {
+        fprintf(out, "    "); // 4 espaços
+    }
+}
+
+void genNodePython(NodeAST *node, FILE *out, int indent)
 {
     if (!node)
         return;
@@ -1429,9 +1467,234 @@ void genNodePython(NodeAST *node, FILE *out)
     switch (node->type)
     {
     case AST_SEQ:
-        genNodePython(node->children[0], out);
-        genNodePython(node->children[1], out);
+        genNodePython(node->children[0], out, indent);
+        genNodePython(node->children[1], out, indent);
         break;
+
+    case AST_DECL:
+    {
+        char *varName = node->children[0]->name;
+
+        if (node->child_count == 2)
+        {
+            char *value = genExprPython(node->children[1]);
+
+            printIndent(out, indent);
+
+            fprintf(out,
+                    "%s = %s\n",
+                    varName,
+                    value);
+
+            free(value);
+        }
+
+        break;
+    }
+
+    case AST_ASSIGN:
+    {
+        char *value =
+            genExprPython(node->children[1]);
+        printIndent(out, indent);
+        fprintf(out,
+                "%s = %s\n",
+                node->children[0]->name,
+                value);
+
+        free(value);
+        break;
+    }
+
+    case AST_IF:
+    {        
+        char *cond =
+            genExprPython(node->children[0]);
+
+        printIndent(out, indent);
+        fprintf(out,
+                "if %s:\n",
+                cond);
+
+        genNodePython(
+            node->children[1],
+            out,
+            indent + 1);
+
+        if (node->child_count == 3)
+        {
+            printIndent(out, indent);
+            fprintf(out, "else:\n");
+
+            genNodePython(
+                node->children[2],
+                out,
+                indent + 1);
+        }
+
+        free(cond);
+        break;
+    }
+    case AST_WHILE:
+    {
+        char *cond =
+            genExprPython(node->children[0]);
+
+        printIndent(out, indent);
+
+        fprintf(out,
+                "while %s:\n",
+                cond);
+
+        genNodePython(
+            node->children[1],
+            out,
+            indent + 1);
+
+        free(cond);
+        break;
+    }
+    case AST_FOR:
+    {
+        NodeAST *init = node->children[0];
+        NodeAST *cond = node->children[1];
+        NodeAST *step = node->children[2];
+        NodeAST *body = node->children[3];
+
+        if (init)
+            genNodePython(init, out, indent);
+
+        char *condStr = genExprPython(cond);
+
+        printIndent(out, indent);
+        fprintf(out, "while %s:\n", condStr);
+
+        free(condStr);
+
+        if (body)
+            genNodePython(body, out, indent + 1);
+
+        if (step)
+            genNodePython(step, out, indent + 1);
+
+        break;
+    }
+    case AST_DO_WHILE:
+    {
+        char *cond = genExprPython(node->children[1]);
+
+        printIndent(out, indent);
+        fprintf(out, "while True:\n");
+
+        genNodePython(
+            node->children[0],
+            out,
+            indent + 1);
+
+        printIndent(out, indent + 1);
+        fprintf(out, "if not (%s):\n", cond);
+
+        printIndent(out, indent + 2);
+        fprintf(out, "break\n");
+
+        free(cond);
+        break;
+    }
+    case AST_BREAK:
+    {
+        printIndent(out, indent);
+        fprintf(out, "break\n");
+        break;
+    }
+    case AST_CONTINUE:
+    {
+        printIndent(out, indent);
+        fprintf(out, "continue\n");
+        break;
+    }
+    case AST_FUNC:
+    {
+        fprintf(out,
+                "def %s(",
+                node->name);
+
+        NodeAST *params = node->children[0];
+
+        while (params)
+        {
+            NodeAST *decl;
+
+            if (params->type == AST_SEQ)
+            {
+                decl = params->children[0];
+                params = params->children[1];
+            }
+            else
+            {
+                decl = params;
+                params = NULL;
+            }
+
+            fprintf(out,
+                    "%s",
+                    decl->children[0]->name);
+
+            if (params)
+                fprintf(out, ", ");
+        }
+
+        fprintf(out, "):\n");
+
+        if (node->children[1])
+        {
+            genNodePython(
+                node->children[1],
+                out,
+                indent + 1);
+        }
+        else
+        {
+            printIndent(out, indent + 1);
+            fprintf(out, "pass\n");
+        }
+
+        fprintf(out, "\n");
+        break;
+    }
+    case AST_RETURN:
+    {
+        printIndent(out, indent);
+
+        fprintf(out, "return");
+
+        if (node->child_count == 1)
+        {
+            char *value =
+                genExprPython(node->children[0]);
+
+            fprintf(out,
+                    " %s",
+                    value);
+
+            free(value);
+        }
+
+        fprintf(out, "\n");
+        break;
+    }
+    case AST_CALL:
+    {
+        char *call =
+            genExprPython(node);
+
+        printIndent(out, indent);
+        fprintf(out,
+                "%s\n",
+                call);
+
+        free(call);
+        break;
+    }
     default:
         break;
     }
@@ -1454,7 +1717,7 @@ void generatePythonFile(NodeAST *root, char *filename)
 
     printf("INFO: Gerando código Python no arquivo '%s'.\n", filename);
 
-    genNodePython(root, file);
+    genNodePython(root, file, 0);
     fclose(file);
 
     printf("SUCESSO: Arquivo '%s' gerado com sucesso!\n", filename);
