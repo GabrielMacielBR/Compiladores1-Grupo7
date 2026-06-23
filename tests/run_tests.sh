@@ -16,7 +16,7 @@ run_test() {
   local file="$1"
   local out="$TEST_DIR/out/$(basename "$file").out"
   echo "Running $file"
-  ./parser < "$file" > "$out" 2>&1 || true
+  ./parser "$file" > "$out" 2>&1 || true
 
   # Basic sanity checks: AST printed and Tabela de Símbolos printed
   if grep -q "AST:" "$out" && grep -q "Tabela de Símbolos" "$out"; then
@@ -37,7 +37,7 @@ fi
 while read -r line; do
   # skip comments and empty lines
   line="${line%%#*}"
-  line="$(echo "$line" | xargs)"
+  line="$(printf '%s' "$line" | tr -d '\r' | xargs)"
   [ -z "$line" ] && continue
   file_rel=$(echo "$line" | awk '{print $1}')
   expect=$(echo "$line" | awk '{print $2}')
@@ -45,7 +45,7 @@ while read -r line; do
   out="$TEST_DIR/out/$(basename "$file_rel").out"
 
   echo "Running $file_rel (expect: $expect)"
-  "$SRC_DIR"/parser < "$file" > "$out" 2>&1 || true
+  "$SRC_DIR"/parser "$file" > "$out" 2>&1 || true
 
   case "$expect" in
     ok)

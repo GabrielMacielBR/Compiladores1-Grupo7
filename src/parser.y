@@ -7,6 +7,7 @@
 
 extern int yyline;
 extern int yycolumn;
+extern FILE *yyin;
 
 /* Prototipos para evitar avisos de funcao implicita */
 int yylex(void);
@@ -669,10 +670,24 @@ return_statement:
 
 %%
 
-int main(void) {
-    printf("Digite expressoes terminadas com ';'. Pressione Ctrl+D para encerrar.\n");
-    initTable();
-    int ret = yyparse();
+int main(int argc, char **argv) {
+  if (argc != 2) {
+    fprintf(stderr, "Uso: %s <arquivo.c>\n", argv[0]);
+    return 1;
+  }
+
+  FILE *input = fopen(argv[1], "r");
+  if (!input) {
+    fprintf(stderr, "Erro: nao foi possivel abrir o arquivo '%s'.\n", argv[1]);
+    return 1;
+  }
+
+  yyin = input;
+
+  initTable();
+  int ret = yyparse();
+  fclose(input);
+
   if (root) {
     printf("INFO: Gerando TAC a partir da AST...\n");
     printf("\n===== AST FINAL =====\n");
@@ -681,8 +696,9 @@ int main(void) {
     generateTAC(root);
     generatePythonFile(root, "result.py");
   }
+
   freeTable();
-    return ret;
+  return ret;
 }
 
 void yyerror(const char *s) {
