@@ -3,7 +3,7 @@
 ## Sumário
 - [Visão geral](#visão-geral)
 - [Features suportadas](#features-suportadas)
-- [Decisões técnicas](#decisões-técnicas)
+- [Arquitetura e implementação](#arquitetura-e-implementação)
 - [Como executar o projeto](#como-executar-o-projeto)
 - [Exemplos de uso](#exemplos-de-uso)
 - [Equipe](#equipe)
@@ -16,11 +16,14 @@ A proposta do projeto é receber programas escritos em um subconjunto da linguag
 Para o gerenciamento do projeto, foi adotada a metodologia ágil Scrum, com o desenvolvimento organizado em sprints semanais, totalizando 12 ciclos até a entrega da versão final. A distribuição das tarefas, o planejamento das atividades e o acompanhamento do progresso da equipe foram realizados por meio do GitHub Issues.
 
 ### Features suportadas
-Subconjunto da linguagem de entrada C: O projeto atualmente suporta e analisa as seguintes estruturas:
-- **Tipos e variáveis:** Declaração e atribuição de variáveis dos tipos `int` e `float`.
-- **Operadores:** Operações aritméticas, lógicas e relacionais.
-- **Controle de Fluxo:** Estruturas condicionais (`if` e `else`), laços de repetição (`for`, `while` e `do-while`) com suporte a controle de execução (`break` e `continue`).
-- **Funções:** Declaração de funções, passagem de argumentos e instrução de retorno.
+O projeto suporta o seguinte subconjunto da linguagem C:
+
+- **Tipos e variáveis:** declaração e atribuição de variáveis dos tipos `int` e `float`.
+- **Operadores aritméticos:** `+`, `-`, `*`, `/`, `++` e `--`.
+- **Operadores relacionais:** `==`, `!=`, `<`, `>`, `<=` e `>=`.
+- **Operadores lógicos:** `&&`, `||` e `!`.
+- **Controle de fluxo:** estruturas condicionais (`if` e `else`) e laços de repetição (`for`, `while` e `do-while`), com suporte aos comandos `break` e `continue`.
+- **Funções:** declaração de funções, passagem de parâmetros, chamadas de função e instrução de retorno (`return`).
 
 ## Arquitetura e implementação
 
