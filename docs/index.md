@@ -8,6 +8,8 @@ icon: lucide/info
 - [Arquitetura e implementação](#arquitetura-e-implementação)
 - [Como executar o projeto](#como-executar-o-projeto)
 - [Exemplos de uso](#exemplos-de-uso)
+- [Sprints](./sprints/)
+- [Atas de Reuniões](./atas/README.md)
 - [Equipe](#equipe)
 
 ## Visão geral
