@@ -33,6 +33,8 @@ site_name = "Compiladores 2026.1: Grupo 7"
 # Read more: https://zensical.org/docs/setup/navigation/
 nav = [
   {"Sobre o projeto" = "index.md"},
+  {"Exemplos de uso" = "exemplos.md"},
+  {"Otimizações de TAC" = "otimizacao.md"},
   {"Sprints" = [
     {"Sprint 1" = "sprints/sprint_1.md"},
     {"Sprint 2" = "sprints/sprint_2.md"},
