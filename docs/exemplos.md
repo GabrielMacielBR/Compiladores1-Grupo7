@@ -1,3 +1,7 @@
+---
+icon: lucide/code
+---
+
 # Exemplos de Uso
 
 Esta página apresenta alguns exemplos de programas escritos em C e o código Python gerado pelo compilador.
