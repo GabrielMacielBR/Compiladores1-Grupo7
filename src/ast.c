@@ -59,7 +59,7 @@ NodeAST *createNodeBinOp(char *op, NodeAST *left, NodeAST *right)
     addChild(newNode, right);
 
     // Operações aritméticas
-    if (strcmp(op, "+") == 0 || strcmp(op, "-") == 0 || strcmp(op, "*") == 0 || strcmp(op, "/") == 0)
+    if (strcmp(op, "+") == 0 || strcmp(op, "-") == 0 || strcmp(op, "*") == 0 || strcmp(op, "/") == 0 || strcmp(op, "%") == 0)
     {
         if (!isNumeric(left->dataType) || !isNumeric(right->dataType))
         {
@@ -1370,10 +1370,41 @@ char *genExprPython(NodeAST *expr)
         char *left = genExprPython(expr->children[0]);
         char *right = genExprPython(expr->children[1]);
 
-        // Determina se os filhos precisam de parênteses por serem compostos
-        int wrapLeft = (expr->children[0]->type == AST_BINOP || expr->children[0]->type == AST_UNOP);
-        int wrapRight = (expr->children[1]->type == AST_BINOP || expr->children[1]->type == AST_UNOP);
+        int isLogical = (strcmp(expr->op, "&&") == 0 || strcmp(expr->op, "||") == 0);
+        int isArithHighPrio = (strcmp(expr->op, "*") == 0 || strcmp(expr->op, "/") == 0 || strcmp(expr->op, "%") == 0);
 
+        int wrapLeft = 0, wrapRight = 0;
+
+        if (expr->children[0]->type == AST_BINOP) {
+            const char *lop = expr->children[0]->op;
+            int childIsLogOrRel = (strcmp(lop,"&&")==0 || strcmp(lop,"||")==0 ||
+                                strcmp(lop,"==")==0 || strcmp(lop,"!=")==0 ||
+                                strcmp(lop,"<")==0  || strcmp(lop,">")==0  ||
+                                strcmp(lop,"<=")==0 || strcmp(lop,">=")==0);
+            int childIsAddSub   = (strcmp(lop,"+") == 0 || strcmp(lop,"-") == 0);
+
+            if (isArithHighPrio && childIsAddSub) wrapLeft = 1;  // (a+b)*c
+            if (isLogical)                         wrapLeft = 1;  // (a>b) and ...
+        }
+
+        if (expr->children[1]->type == AST_BINOP) {
+            const char *rop = expr->children[1]->op;
+            int childIsLogOrRel = (strcmp(rop,"&&")==0 || strcmp(rop,"||")==0 ||
+                                strcmp(rop,"==")==0 || strcmp(rop,"!=")==0 ||
+                                strcmp(rop,"<")==0  || strcmp(rop,">")==0  ||
+                                strcmp(rop,"<=")==0 || strcmp(rop,">=")==0);
+            int childIsAddSub   = (strcmp(rop,"+") == 0 || strcmp(rop,"-") == 0);
+
+            if (isArithHighPrio && childIsAddSub) wrapRight = 1; // a*(b+c)
+            if (isLogical)                         wrapRight = 1; // ... and (a>b)
+        }
+
+        if ((strcmp(expr->op,"/")==0 || strcmp(expr->op,"*")==0) &&
+            expr->children[0]->type == AST_BINOP) {
+            const char *lop = expr->children[0]->op;
+            if (strcmp(lop,"*")==0 || strcmp(lop,"/")==0 || strcmp(lop,"%")==0)
+                wrapLeft = 1;
+        }
         const char *pyOp = expr->op;
         if (strcmp(expr->op, "&&") == 0) pyOp = "and";
         else if (strcmp(expr->op, "||") == 0) pyOp = "or";
@@ -1502,6 +1533,30 @@ static void genParamsPython(NodeAST *params, FILE *out, int *first)
     }
 }
 
+static void insertStepBeforeContinue(NodeAST *node, NodeAST *step)
+{
+    if (!node) return;
+
+    for (int i = 0; i < node->child_count; i++)
+    {
+        if (node->children[i] && node->children[i]->type == AST_CONTINUE)
+        {
+            node->children[i] = createNodeSeq(step, node->children[i]);
+        }
+        else
+        {
+            NodeAST *child = node->children[i];
+            if (child && child->type != AST_WHILE &&
+                         child->type != AST_FOR   &&
+                         child->type != AST_DO_WHILE)
+            {
+                insertStepBeforeContinue(child, step);
+            }
+        }
+    }
+}
+
+
 void genNodePython(NodeAST *node, FILE *out, int indent)
 {
     if (!node)
@@ -1537,15 +1592,27 @@ void genNodePython(NodeAST *node, FILE *out, int indent)
 
     case AST_ASSIGN:
     {
-        char *value =
-            genExprPython(node->children[1]);
-        printIndent(out, indent);
-        fprintf(out,
-                "%s = %s\n",
-                node->children[0]->name,
-                value);
+        NodeAST *lhs = node->children[0];
+        NodeAST *rhs = node->children[1];
 
-        free(value);
+        if (rhs && rhs->type == AST_BINOP &&
+            (strcmp(rhs->op, "+") == 0 || strcmp(rhs->op, "-") == 0) &&
+            rhs->children[0] && rhs->children[0]->type == AST_ID &&
+            strcmp(rhs->children[0]->name, lhs->name) == 0 &&
+            rhs->children[1] && rhs->children[1]->type == AST_NUM &&
+            rhs->children[1]->value == 1)
+        {
+            printIndent(out, indent);
+            fprintf(out, "%s %s= 1\n", lhs->name, rhs->op);
+        }
+        else
+        {
+            // Atribuição padrão (ex: x = 5 ou a = x)
+            char *value = genExprPython(rhs);
+            printIndent(out, indent);
+            fprintf(out, "%s = %s\n", lhs->name, value);
+            free(value);
+        }
         break;
     }
 
@@ -1629,6 +1696,9 @@ void genNodePython(NodeAST *node, FILE *out, int indent)
         fprintf(out, "while %s:\n", condStr);
 
         free(condStr);
+
+        if (body && step)
+            insertStepBeforeContinue(body, step);
 
         if (body)
             genNodePython(body, out, indent + 1);

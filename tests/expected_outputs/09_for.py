@@ -3,5 +3,5 @@ def main():
     i = 0
     while i < 10:
         soma = soma + i
-        i = i + 1
+        i += 1
     return 0

@@ -42,7 +42,7 @@ int loopCounter = 0;
 %token <id> IDENT
 %token ASSIGN SEMICOLON COMMA
 %token COLON QUESTION
-%token PLUS MINUS TIMES DIVIDE LPAREN RPAREN LBRACE RBRACE
+%token PLUS MINUS TIMES DIVIDE MOD LPAREN RPAREN LBRACE RBRACE
 %token EQ NEQ LT GT LEQ GEQ AND OR NOT INCREMENT DECREMENT
 %token WHILE FOR DO
 %token IF ELSE
@@ -70,7 +70,7 @@ int loopCounter = 0;
 %left AND
 %nonassoc EQ NEQ LT GT LEQ GEQ
 %left PLUS MINUS
-%left TIMES DIVIDE
+%left TIMES DIVIDE MOD
 %right NOT
 %nonassoc LOWER_THAN_ELSE
 
@@ -278,7 +278,6 @@ assignment:
         yyerror(_msg);
         YYABORT;
       } else {
-        /* checar compatibilidade de tipos entre LHS e RHS (Bottom-up AST) */
         {
           const char *lhsType = getSymbolType($1);
           const char *rhsType = $3->dataType;
@@ -289,10 +288,7 @@ assignment:
             YYABORT;
           }
         }
-        $$ = createNodeAssign(
-          createNodeId($1),
-          $3
-        );
+        $$ = createNodeAssign(createNodeId($1), $3);
       }
     }
   | IDENT INCREMENT
@@ -310,14 +306,7 @@ assignment:
           yyerror(_msg);
           YYABORT;
         }
-        $$ = createNodeAssign(
-          createNodeId($1),
-          createNodeBinOp(
-            "+",
-            createNodeId($1),
-            createNodeNum(1)
-          )
-        );
+        $$ = createNodeAssign(createNodeId($1), createNodeBinOp("+", createNodeId($1), createNodeNum(1)));
       }
     }
   | IDENT DECREMENT
@@ -335,14 +324,44 @@ assignment:
           yyerror(_msg);
           YYABORT;
         }
-        $$ = createNodeAssign(
-          createNodeId($1),
-          createNodeBinOp(
-            "-",
-            createNodeId($1),
-            createNodeNum(1)
-          )
-        );
+        $$ = createNodeAssign(createNodeId($1), createNodeBinOp("-", createNodeId($1), createNodeNum(1)));
+      }
+    }
+  /* ---- ADICIONE AS DUAS REGRAS ABAIXO PARA SUPORTAR PRÉ-INCREMENTO E PRÉ-DECREMENTO ---- */
+  | INCREMENT IDENT
+    {
+      if (!searchSymbol($2)) {
+        char _msg[128];
+        snprintf(_msg, sizeof(_msg), "[SEMANTIC ERROR -> L%d:C%d] incremento em símbolo não declarado: %s.\n", yyline, yycolumn - (int)strlen($2), $2);
+        yyerror(_msg);
+        YYABORT;
+      } else {
+        const char *t = getSymbolType($2);
+        if (!t || strcmp(t, "int") != 0) {
+          char _msg[128];
+          snprintf(_msg, sizeof(_msg), "[SEMANTIC ERRO -> L%d:C%d] incremento apenas permitido para int: %s.\n", yyline, yycolumn - (int)strlen($2), $2);
+          yyerror(_msg);
+          YYABORT;
+        }
+        $$ = createNodeAssign(createNodeId($2), createNodeBinOp("+", createNodeId($2), createNodeNum(1)));
+      }
+    }
+  | DECREMENT IDENT
+    {
+      if (!searchSymbol($2)) {
+        char _msg[128];
+        snprintf(_msg, sizeof(_msg), "[SEMANTIC ERROR -> L%d:C%d] decremento em símbolo não declarado: %s.\n", yyline, yycolumn - (int)strlen($2), $2);
+        yyerror(_msg);
+        YYABORT;
+      } else {
+        const char *t = getSymbolType($2);
+        if (!t || strcmp(t, "int") != 0) {
+          char _msg[128];
+          snprintf(_msg, sizeof(_msg), "[SEMANTIC ERROR -> L%d:C%d] decremento apenas permitido para int: %s.\n", yyline, yycolumn - (int)strlen($2), $2);
+          yyerror(_msg);
+          YYABORT;
+        }
+        $$ = createNodeAssign(createNodeId($2), createNodeBinOp("-", createNodeId($2), createNodeNum(1)));
       }
     }
 ;
@@ -385,6 +404,9 @@ expr:
     }
   | expr DIVIDE expr {
         $$ = createNodeBinOp("/", $1, $3);
+    }
+  | expr MOD expr {
+        $$ = createNodeBinOp("%", $1, $3);
     }
   | NOT expr {
         $$ = createNodeUnOp("!", $2);
@@ -553,10 +575,19 @@ function_definition:
       current_function_has_return = 0;
       pushScope();
     }
-    parameter_list_opt RPAREN function_block
+    parameter_list_opt RPAREN
     {
-  $$ = createNodeFunc($2, "int", $5, $7);
-      setFunctionAst($2, $$);
+      NodeAST *partialFunc = createNodeFunc($2, "int", $5, NULL);
+      setFunctionAst($2, partialFunc);
+    }
+    function_block
+    {
+      NodeAST *funcNode = getFunctionAst($2);
+      if (funcNode) {
+          funcNode->children[1] = $8;
+      }
+      $$ = funcNode;
+
       popScope();
       if (!current_function_has_return) {
         fprintf(stderr, "[SEMANTIC WARNING -> L%d:C%d] função '%s' não possui retorno.\n", yyline, yycolumn, $2);
@@ -578,10 +609,19 @@ function_definition:
       current_function_has_return = 0;
       pushScope();
     }
-    parameter_list_opt RPAREN function_block
+    parameter_list_opt RPAREN
     {
-  $$ = createNodeFunc($2, "float", $5, $7);
-      setFunctionAst($2, $$);
+      NodeAST *partialFunc = createNodeFunc($2, "float", $5, NULL);
+      setFunctionAst($2, partialFunc);
+    }
+    function_block
+    {
+      NodeAST *funcNode = getFunctionAst($2);
+      if (funcNode) {
+          funcNode->children[1] = $8;
+      }
+      $$ = funcNode;
+
       popScope();
       if (!current_function_has_return) {
         fprintf(stderr, "[SEMANTIC WARNING -> L%d:C%d] função '%s' não possui retorno.\n", yyline, yycolumn, $2);
