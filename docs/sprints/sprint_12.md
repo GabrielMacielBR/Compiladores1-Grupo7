@@ -4,22 +4,23 @@
 **Status:** ✅ Concluída  
 
 ## Objetivo
-Consolidar as funcionalidades de AST, Tabela de Símbolos, estrutura de funções e testes do projeto.
+Preparar a apresentação do projeto e iniciar os estudos sobre abordagens de implementação para as etapas finais do compilador.
 
 ## Atividades
-- [x] Implementar estrutura de funções no compilador.
-- [x] Implementar testes do projeto.
-- [x] Adicionar casos de teste para AST e Tabela de Símbolos.
+- [x] Preparar a apresentação do projeto.
+- [x] Revisar o estado atual das etapas já implementadas.
+- [x] Iniciar estudos sobre abordagens para geração de código final.
+- [x] Iniciar estudos sobre abordagens para otimização de código.
 
 ## Resultados
-- A estrutura de funções foi integrada ao compilador, com definição de funções, parâmetros, chamadas e instrução de retorno.
-- Foram adicionados casos de teste para AST e Tabela de Símbolos.
-- Foram adicionados arquivos esperados para comparação em `tests/expected_ast` e `tests/expected_table`.
-- O script `tests/run_tests.sh` foi ajustado para gerar saídas em `tests/out` durante a execução dos testes.
+- A equipe organizou a preparação para a apresentação do projeto.
+- Foram revisadas as funcionalidades já implementadas até o momento.
+- Foram iniciados estudos sobre possíveis abordagens para implementar a geração de código final.
+- Foram iniciados estudos sobre possíveis abordagens para implementar a otimização de código.
 
 ### Testes executados
 
 ## Dificuldades
 
 ## Observações
-- A sprint consolidou a estrutura de funções e a base de testes do projeto.
+- A sprint teve foco em preparação, alinhamento e estudo das etapas finais do projeto.
