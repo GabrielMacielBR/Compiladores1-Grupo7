@@ -8,7 +8,11 @@ icon: lucide/info
 - [Arquitetura e implementação](#arquitetura-e-implementação)
 - [Como executar o projeto](#como-executar-o-projeto)
 - [Exemplos de uso](#exemplos-de-uso)
+- [Sprints](./sprints/)
+- [Atas de Reuniões](./atas/README.md)
 - [Equipe](#equipe)
+- [Otimização de Código](./otimizacao.md)
+- [Exemplos de Uso](./exemplos.md)
 
 ## Visão geral
 Este repositório contém o desenvolvimento de um **compilador de C para Python**, implementado em C. O projeto foi desenvolvido como parte da disciplina Compiladores I, pela Faculdade de Ciência, Tecnologia e Engenharia (FCTE) da Universidade de Brasília (UnB), pelos alunos do Equipe 07.
@@ -70,7 +74,7 @@ Implementada sobre a AST utilizando tabela de símbolos e gerenciamento de escop
 Implementada com a técnica de Three-Address Code (TAC). A partir da AST, as construções da linguagem são traduzidas para uma representação intermediária composta por instruções simples e variáveis temporárias.
 
 #### 7) Otimização de código
-Implementada sobre a representação intermediária em TAC, foram utilizadas as técnicas de Constant Folding, Constant Propagation e Dead Code Elimination. A descrição detalhada dessas otimizações e de seus respectivos resultados pode ser consultada [aqui](./docs/otimizacao.md).
+Implementada sobre a representação intermediária em TAC, foram utilizadas as técnicas de Constant Folding, Constant Propagation e Dead Code Elimination. A descrição detalhada dessas otimizações e de seus respectivos resultados pode ser consultada [aqui](./otimizacao.md).
 
 #### 8) Geração de código final
 Implementada a partir da AST. Embora o projeto possua uma representação intermediária em TAC, optou-se por gerar o código final diretamente da AST, uma vez que sua estrutura hierárquica preserva melhor as informações sintáticas e semânticas do programa, simplificando a tradução para a linguagem Python.
