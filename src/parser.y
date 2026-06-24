@@ -42,7 +42,7 @@ int loopCounter = 0;
 %token <id> IDENT
 %token ASSIGN SEMICOLON COMMA
 %token COLON QUESTION
-%token PLUS MINUS TIMES DIVIDE LPAREN RPAREN LBRACE RBRACE
+%token PLUS MINUS TIMES DIVIDE MOD LPAREN RPAREN LBRACE RBRACE
 %token EQ NEQ LT GT LEQ GEQ AND OR NOT INCREMENT DECREMENT
 %token WHILE FOR DO
 %token IF ELSE
@@ -70,7 +70,7 @@ int loopCounter = 0;
 %left AND
 %nonassoc EQ NEQ LT GT LEQ GEQ
 %left PLUS MINUS
-%left TIMES DIVIDE
+%left TIMES DIVIDE MOD
 %right NOT
 %nonassoc LOWER_THAN_ELSE
 
@@ -405,6 +405,9 @@ expr:
   | expr DIVIDE expr {
         $$ = createNodeBinOp("/", $1, $3);
     }
+  | expr MOD expr {
+        $$ = createNodeBinOp("%", $1, $3);
+    }
   | NOT expr {
         $$ = createNodeUnOp("!", $2);
     }
@@ -572,10 +575,19 @@ function_definition:
       current_function_has_return = 0;
       pushScope();
     }
-    parameter_list_opt RPAREN function_block
+    parameter_list_opt RPAREN
     {
-  $$ = createNodeFunc($2, "int", $5, $7);
-      setFunctionAst($2, $$);
+      NodeAST *partialFunc = createNodeFunc($2, "int", $5, NULL);
+      setFunctionAst($2, partialFunc);
+    }
+    function_block
+    {
+      NodeAST *funcNode = getFunctionAst($2);
+      if (funcNode) {
+          funcNode->children[1] = $8;
+      }
+      $$ = funcNode;
+
       popScope();
       if (!current_function_has_return) {
         fprintf(stderr, "[SEMANTIC WARNING -> L%d:C%d] função '%s' não possui retorno.\n", yyline, yycolumn, $2);
@@ -597,10 +609,19 @@ function_definition:
       current_function_has_return = 0;
       pushScope();
     }
-    parameter_list_opt RPAREN function_block
+    parameter_list_opt RPAREN
     {
-  $$ = createNodeFunc($2, "float", $5, $7);
-      setFunctionAst($2, $$);
+      NodeAST *partialFunc = createNodeFunc($2, "float", $5, NULL);
+      setFunctionAst($2, partialFunc);
+    }
+    function_block
+    {
+      NodeAST *funcNode = getFunctionAst($2);
+      if (funcNode) {
+          funcNode->children[1] = $8;
+      }
+      $$ = funcNode;
+
       popScope();
       if (!current_function_has_return) {
         fprintf(stderr, "[SEMANTIC WARNING -> L%d:C%d] função '%s' não possui retorno.\n", yyline, yycolumn, $2);
