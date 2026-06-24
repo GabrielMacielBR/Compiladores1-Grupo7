@@ -117,8 +117,6 @@ cd ./tests
 ```
 Esse comando percorre todos os arquivos .c da pasta tests, executa o compilador para cada teste, exibe se teste passou ou não, e se o teste falhou, exibe a saída correspondente.
 
-## Exemplos de uso
-
 # Equipe
 
 Conheça o grupo deste projeto:
