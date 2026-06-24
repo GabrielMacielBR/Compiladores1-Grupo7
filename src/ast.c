@@ -1324,6 +1324,23 @@ TAC *optimizeTAC(TAC *list)
     return newList;
 }
 
+static int isAtom(NodeAST *node) {
+    if (!node) return 1;
+    return (node->type == AST_NUM || node->type == AST_FLOAT || node->type == AST_ID);
+}
+
+static void formatPythonFloat(char *buffer, size_t size, float value) {
+    snprintf(buffer, size, "%f", value);
+    size_t len = strlen(buffer);
+    while (len > 0 && buffer[len - 1] == '0') {
+        if (len > 2 && buffer[len - 2] == '.') {
+            break; // Mantém pelo menos o ".0"
+        }
+        buffer[len - 1] = '\0';
+        len--;
+    }
+}
+
 char *genExprPython(NodeAST *expr)
 {
     if (!expr)
@@ -1341,7 +1358,7 @@ char *genExprPython(NodeAST *expr)
     case AST_FLOAT:
     {
         char buffer[64];
-        snprintf(buffer, sizeof(buffer), "%f", expr->floatValue);
+        formatPythonFloat(buffer, sizeof(buffer), expr->floatValue);
         return strdup(buffer);
     }
 
@@ -1353,46 +1370,52 @@ char *genExprPython(NodeAST *expr)
         char *left = genExprPython(expr->children[0]);
         char *right = genExprPython(expr->children[1]);
 
-        const char *pyOp = expr->op;
-        if (strcmp(expr->op, "&&") == 0)
-        {
-            pyOp = "and";
-        }
-        else if (strcmp(expr->op, "||") == 0)
-        {
-            pyOp = "or";
-        }
+        // Determina se os filhos precisam de parênteses por serem compostos
+        int wrapLeft = (expr->children[0]->type == AST_BINOP || expr->children[0]->type == AST_UNOP);
+        int wrapRight = (expr->children[1]->type == AST_BINOP || expr->children[1]->type == AST_UNOP);
 
-        size_t size = strlen(left) + strlen(pyOp) + strlen(right) + 6;
+        const char *pyOp = expr->op;
+        if (strcmp(expr->op, "&&") == 0) pyOp = "and";
+        else if (strcmp(expr->op, "||") == 0) pyOp = "or";
+
+        size_t size = strlen(left) + strlen(right) + strlen(pyOp) + 12;
         char *result = malloc(size);
 
         if (result)
         {
-            snprintf(result, size, "(%s %s %s)", left, pyOp, right);
+            char leftFinal[512];
+            char rightFinal[512];
+            
+            // Aplica os parênteses nos filhos se necessário
+            if (wrapLeft) snprintf(leftFinal, sizeof(leftFinal), "(%s)", left);
+            else snprintf(leftFinal, sizeof(leftFinal), "%s", left);
+
+            if (wrapRight) snprintf(rightFinal, sizeof(rightFinal), "(%s)", right);
+            else snprintf(rightFinal, sizeof(rightFinal), "%s", right);
+
+            snprintf(result, size, "%s %s %s", leftFinal, pyOp, rightFinal);
         }
 
         free(left);
         free(right);
-
         return result;
     }
 
     case AST_UNOP:
     {
         char *child = genExprPython(expr->children[0]);
+        int wrapChild = (expr->children[0]->type == AST_BINOP || expr->children[0]->type == AST_UNOP);
 
         const char *pyOp = expr->op;
-        if (strcmp(expr->op, "!") == 0)
-        {
-            pyOp = "not ";
-        }
+        if (strcmp(expr->op, "!") == 0) pyOp = "not ";
 
-        size_t size = strlen(pyOp) + strlen(child) + 4;
+        size_t size = strlen(pyOp) + strlen(child) + 6;
         char *result = malloc(size);
 
         if (result)
         {
-            snprintf(result, size, "(%s%s)", pyOp, child);
+            if (wrapChild) snprintf(result, size, "%s(%s)", pyOp, child);
+            else snprintf(result, size, "%s%s", pyOp, child);
         }
 
         free(child);
@@ -1527,34 +1550,50 @@ void genNodePython(NodeAST *node, FILE *out, int indent)
     }
 
     case AST_IF:
-    {        
-        char *cond =
-            genExprPython(node->children[0]);
-
-        printIndent(out, indent);
-        fprintf(out,
-                "if %s:\n",
-                cond);
-
-        genNodePython(
-            node->children[1],
-            out,
-            indent + 1);
-
-        if (node->child_count == 3)
+    {
+        NodeAST *current = node;
+        
+        while (current && current->type == AST_IF)
         {
+            char *cond = genExprPython(current->children[0]);
+            
             printIndent(out, indent);
-            fprintf(out, "else:\n");
+            if (current == node)
+            {
+                fprintf(out, "if %s:\n", cond);
+            }
+            else
+            {
+                fprintf(out, "elif %s:\n", cond);
+            }
+            free(cond);
 
-            genNodePython(
-                node->children[2],
-                out,
-                indent + 1);
+            genNodePython(current->children[1], out, indent + 1);
+
+            if (current->child_count == 3)
+            {
+                NodeAST *nextElse = current->children[2];
+                
+                if (nextElse->type == AST_IF)
+                {
+                    current = nextElse;
+                }
+                else
+                {
+                    printIndent(out, indent);
+                    fprintf(out, "else:\n");
+                    genNodePython(nextElse, out, indent + 1);
+                    current = NULL;
+                }
+            }
+            else
+            {
+                current = NULL;
+            }
         }
-
-        free(cond);
         break;
     }
+
     case AST_WHILE:
     {
         char *cond =
@@ -1612,7 +1651,8 @@ void genNodePython(NodeAST *node, FILE *out, int indent)
             indent + 1);
 
         printIndent(out, indent + 1);
-        fprintf(out, "if not (%s):\n", cond);
+        // REMOVIDO os parênteses redundantes do formato!
+        fprintf(out, "if not %s:\n", cond);
 
         printIndent(out, indent + 2);
         fprintf(out, "break\n");
