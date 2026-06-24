@@ -48,6 +48,7 @@ while       { return WHILE; }
 "-"    { return MINUS; }
 "*"    { return TIMES; }
 "/"    { return DIVIDE; }
+"%"    { return MOD; }
 "="    { return ASSIGN; }
 "<"    { return LT; }
 ">"    { return GT; }
