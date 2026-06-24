@@ -1,3 +1,7 @@
+---
+icon: lucide/arrow-big-up-dash
+---
+
 # Otimizações de TAC
 
 Este documento resume, de forma breve, os pontos de melhoria identificados no projeto, as técnicas de otimização aplicadas sobre o TAC e os ganhos de desempenho observados nos testes realizados.
