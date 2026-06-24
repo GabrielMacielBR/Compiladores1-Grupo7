@@ -1542,34 +1542,50 @@ void genNodePython(NodeAST *node, FILE *out, int indent)
     }
 
     case AST_IF:
-    {        
-        char *cond =
-            genExprPython(node->children[0]);
-
-        printIndent(out, indent);
-        fprintf(out,
-                "if %s:\n",
-                cond);
-
-        genNodePython(
-            node->children[1],
-            out,
-            indent + 1);
-
-        if (node->child_count == 3)
+    {
+        NodeAST *current = node;
+        
+        while (current && current->type == AST_IF)
         {
+            char *cond = genExprPython(current->children[0]);
+            
             printIndent(out, indent);
-            fprintf(out, "else:\n");
+            if (current == node)
+            {
+                fprintf(out, "if %s:\n", cond);
+            }
+            else
+            {
+                fprintf(out, "elif %s:\n", cond);
+            }
+            free(cond);
 
-            genNodePython(
-                node->children[2],
-                out,
-                indent + 1);
+            genNodePython(current->children[1], out, indent + 1);
+
+            if (current->child_count == 3)
+            {
+                NodeAST *nextElse = current->children[2];
+                
+                if (nextElse->type == AST_IF)
+                {
+                    current = nextElse;
+                }
+                else
+                {
+                    printIndent(out, indent);
+                    fprintf(out, "else:\n");
+                    genNodePython(nextElse, out, indent + 1);
+                    current = NULL;
+                }
+            }
+            else
+            {
+                current = NULL;
+            }
         }
-
-        free(cond);
         break;
     }
+
     case AST_WHILE:
     {
         char *cond =
