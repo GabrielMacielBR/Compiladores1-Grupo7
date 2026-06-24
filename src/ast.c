@@ -1329,6 +1329,18 @@ static int isAtom(NodeAST *node) {
     return (node->type == AST_NUM || node->type == AST_FLOAT || node->type == AST_ID);
 }
 
+static void formatPythonFloat(char *buffer, size_t size, float value) {
+    snprintf(buffer, size, "%f", value);
+    size_t len = strlen(buffer);
+    while (len > 0 && buffer[len - 1] == '0') {
+        if (len > 2 && buffer[len - 2] == '.') {
+            break; // Mantém pelo menos o ".0"
+        }
+        buffer[len - 1] = '\0';
+        len--;
+    }
+}
+
 char *genExprPython(NodeAST *expr)
 {
     if (!expr)
@@ -1346,7 +1358,7 @@ char *genExprPython(NodeAST *expr)
     case AST_FLOAT:
     {
         char buffer[64];
-        snprintf(buffer, sizeof(buffer), "%f", expr->floatValue);
+        formatPythonFloat(buffer, sizeof(buffer), expr->floatValue);
         return strdup(buffer);
     }
 
@@ -1358,56 +1370,52 @@ char *genExprPython(NodeAST *expr)
         char *left = genExprPython(expr->children[0]);
         char *right = genExprPython(expr->children[1]);
 
-        const char *pyOp = expr->op;
-        if (strcmp(expr->op, "&&") == 0)
-        {
-            pyOp = "and";
-        }
-        else if (strcmp(expr->op, "||") == 0)
-        {
-            pyOp = "or";
-        }
+        // Determina se os filhos precisam de parênteses por serem compostos
+        int wrapLeft = (expr->children[0]->type == AST_BINOP || expr->children[0]->type == AST_UNOP);
+        int wrapRight = (expr->children[1]->type == AST_BINOP || expr->children[1]->type == AST_UNOP);
 
-        size_t size = strlen(left) + strlen(pyOp) + strlen(right) + 8;
+        const char *pyOp = expr->op;
+        if (strcmp(expr->op, "&&") == 0) pyOp = "and";
+        else if (strcmp(expr->op, "||") == 0) pyOp = "or";
+
+        size_t size = strlen(left) + strlen(right) + strlen(pyOp) + 12;
         char *result = malloc(size);
 
         if (result)
         {
-            // Aplica a regra do átomo para evitar parênteses duplicados
-            if (isAtom(expr->children[0]) && isAtom(expr->children[1])) {
-                snprintf(result, size, "%s %s %s", left, pyOp, right);
-            } else {
-                snprintf(result, size, "(%s %s %s)", left, pyOp, right);
-            }
+            char leftFinal[512];
+            char rightFinal[512];
+            
+            // Aplica os parênteses nos filhos se necessário
+            if (wrapLeft) snprintf(leftFinal, sizeof(leftFinal), "(%s)", left);
+            else snprintf(leftFinal, sizeof(leftFinal), "%s", left);
+
+            if (wrapRight) snprintf(rightFinal, sizeof(rightFinal), "(%s)", right);
+            else snprintf(rightFinal, sizeof(rightFinal), "%s", right);
+
+            snprintf(result, size, "%s %s %s", leftFinal, pyOp, rightFinal);
         }
 
         free(left);
         free(right);
-
         return result;
     }
 
     case AST_UNOP:
     {
         char *child = genExprPython(expr->children[0]);
+        int wrapChild = (expr->children[0]->type == AST_BINOP || expr->children[0]->type == AST_UNOP);
 
         const char *pyOp = expr->op;
-        if (strcmp(expr->op, "!") == 0)
-        {
-            pyOp = "not ";
-        }
+        if (strcmp(expr->op, "!") == 0) pyOp = "not ";
 
-        size_t size = strlen(pyOp) + strlen(child) + 4;
+        size_t size = strlen(pyOp) + strlen(child) + 6;
         char *result = malloc(size);
 
         if (result)
         {
-            // Aplica a regra do átomo para o operador unário
-            if (isAtom(expr->children[0])) {
-                snprintf(result, size, "%s%s", pyOp, child);
-            } else {
-                snprintf(result, size, "(%s%s)", pyOp, child);
-            }
+            if (wrapChild) snprintf(result, size, "%s(%s)", pyOp, child);
+            else snprintf(result, size, "%s%s", pyOp, child);
         }
 
         free(child);
