@@ -63,7 +63,7 @@ NodeAST *createNodeBinOp(char *op, NodeAST *left, NodeAST *right)
     {
         if (!isNumeric(left->dataType) || !isNumeric(right->dataType))
         {
-            fprintf(stderr, "Erro semântico: operação aritmética inválida\n");
+            fprintf(stderr, "[SEMANTIC ERROR] operação aritmética inválida\n");
 
             strcpy(newNode->dataType, "error");
             return newNode;
@@ -81,7 +81,7 @@ NodeAST *createNodeBinOp(char *op, NodeAST *left, NodeAST *right)
 
         if (!isNumeric(left->dataType) || !isNumeric(right->dataType))
         {
-            fprintf(stderr, "Erro semântico: comparação inválida\n");
+            fprintf(stderr, "[SEMANTIC ERROR] comparação inválida\n");
 
             strcpy(newNode->dataType, "error");
             return newNode;
@@ -94,7 +94,7 @@ NodeAST *createNodeBinOp(char *op, NodeAST *left, NodeAST *right)
     {
         if (!isBooleanCompatible(left->dataType) || !isBooleanCompatible(right->dataType))
         {
-            fprintf(stderr, "Erro semântico: operação lógica inválida\n");
+            fprintf(stderr, "\n[SEMANTIC ERROR] operação lógica inválida");
 
             strcpy(newNode->dataType, "error");
             return newNode;
@@ -322,7 +322,7 @@ static int compareFunctionArgs(NodeAST *params,
     if (!params || !args)
     {
         snprintf(message, messageSize,
-                 "Erro semântico: quantidade de argumentos incompatível na chamada de função");
+                 "\n[SEMANTIC ERROR] quantidade de argumentos incompatível na chamada de função");
         return 0;
     }
 
@@ -335,21 +335,21 @@ static int compareFunctionArgs(NodeAST *params,
     if (!paramNode || paramNode->type != AST_DECL)
     {
         snprintf(message, messageSize,
-                 "Erro semântico: assinatura de função inválida");
+                 "\n[SEMANTIC ERROR] assinatura de função inválida");
         return 0;
     }
 
     if (!argNode || !argNode->dataType[0])
     {
         snprintf(message, messageSize,
-                 "Erro semântico: argumento sem tipo definido na chamada de função");
+                 "\n[SEMANTIC ERROR] argumento sem tipo definido na chamada de função");
         return 0;
     }
 
     if (strcmp(paramNode->op, argNode->dataType) != 0)
     {
         snprintf(message, messageSize,
-                 "Erro semântico: tipo de argumento incompatível na chamada de função; esperado %s, recebido %s",
+                 "\n[SEMANTIC ERROR] tipo de argumento incompatível na chamada de função -> esperado %s, recebido %s",
                  paramNode->op,
                  argNode->dataType);
         return 0;
@@ -372,7 +372,7 @@ int checkFunctionCallArgs(char *name,
     {
         snprintf(message,
                  messageSize,
-                 "Erro semântico: função sem assinatura registrada: %s",
+                 "\n[SEMANTIC ERROR] função sem assinatura registrada: %s",
                  name);
         return 0;
     }
@@ -1103,10 +1103,8 @@ void generateTAC(NodeAST *root)
         }
     }
 
-    printf("--- TAC emitted (basic) ---\n");
+    printf("\n=== TAC ===\n");
     printTAC(list);
-    printf("--- end TAC ---\n");
-
     freeTAC(list);
 }
 
@@ -1704,21 +1702,21 @@ void generatePythonFile(NodeAST *root, char *filename)
 {
     if (!root)
     {
-        printf("Aviso: AST vazia, nenhum código Python gerado.\n");
+        printf("[INFO] AST vazia, nenhum código Python gerado.\n");
         return;
     }
 
     FILE *file = fopen(filename, "w");
     if (!file)
     {
-        fprintf(stderr, "Erro: Não foi possível criar ou abrir o arquivo %s.\n", filename);
+        fprintf(stderr, "[CODEGEN ERROR] não foi possível criar ou abrir o arquivo '%s'.\n", filename);
         return;
     }
 
-    printf("INFO: Gerando código Python no arquivo '%s'.\n", filename);
+    printf("\n[CODEGEN] gerando código Python no arquivo '%s'...\n", filename);
 
     genNodePython(root, file, 0);
     fclose(file);
 
-    printf("SUCESSO: Arquivo '%s' gerado com sucesso!\n", filename);
+    printf("[CODEGEN] arquivo '%s' gerado com sucesso!\n", filename);
 }
