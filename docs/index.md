@@ -7,7 +7,6 @@ icon: lucide/info
 - [Features suportadas](#features-suportadas)
 - [Arquitetura e implementação](#arquitetura-e-implementação)
 - [Como executar o projeto](#como-executar-o-projeto)
-- [Exemplos de uso](#exemplos-de-uso)
 - [Sprints](./sprints/)
 - [Atas de Reuniões](./atas/README.md)
 - [Equipe](#equipe)
