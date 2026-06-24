@@ -1459,6 +1459,28 @@ static void printIndent(FILE *out, int level)
     }
 }
 
+static void genParamsPython(NodeAST *params, FILE *out, int *first)
+{
+    if (!params)
+        return;
+
+    if (params->type == AST_SEQ)
+    {
+        genParamsPython(params->children[0], out, first);
+        genParamsPython(params->children[1], out, first);
+        return;
+    }
+
+    if (params->type == AST_DECL && params->child_count > 0)
+    {
+        if (!*first)
+            fprintf(out, ", ");
+
+        fprintf(out, "%s", params->children[0]->name);
+        *first = 0;
+    }
+}
+
 void genNodePython(NodeAST *node, FILE *out, int indent)
 {
     if (!node)
@@ -1618,30 +1640,8 @@ void genNodePython(NodeAST *node, FILE *out, int indent)
                 "def %s(",
                 node->name);
 
-        NodeAST *params = node->children[0];
-
-        while (params)
-        {
-            NodeAST *decl;
-
-            if (params->type == AST_SEQ)
-            {
-                decl = params->children[0];
-                params = params->children[1];
-            }
-            else
-            {
-                decl = params;
-                params = NULL;
-            }
-
-            fprintf(out,
-                    "%s",
-                    decl->children[0]->name);
-
-            if (params)
-                fprintf(out, ", ");
-        }
+        int firstParam = 1;
+        genParamsPython(node->children[0], out, &firstParam);
 
         fprintf(out, "):\n");
 
