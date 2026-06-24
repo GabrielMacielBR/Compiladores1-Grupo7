@@ -105,12 +105,11 @@ Esse processo gera o executável do compilador.
 
 ### Execução dos testes
 
-Após a compilação, execute os testes com:
+(Apenas em ambiente Linux/MacOS) Na pasta raiz do repositório, execute:
 ```bash
-cd ../tests
-for f in *.c; do echo "Arquivo: $f"; ../src/parser.o < "$f"; echo "---"; done
+cd ./tests
+./run_tests.sh
 ```
-
 Esse comando percorre todos os arquivos .c da pasta tests, executa o compilador para cada teste e exibe a saída correspondente.
 
 ## Exemplos de uso

@@ -10,11 +10,6 @@ normalize() {
     sed 's/[[:space:]]*$//' "$1" | grep -v '^[[:space:]]*$'
 }
 
-echo "=============================="
-echo " transpilador C -> Python"
-echo "=============================="
-echo ""
-
 echo ">> rodando make..."
 make -C ../src
 if [ $? -ne 0 ]; then
