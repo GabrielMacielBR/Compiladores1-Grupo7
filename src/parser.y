@@ -14,7 +14,9 @@ int yylex(void);
 void yyerror(const char *s);
 
 int yydebug = 0;
+
 NodeAST *root = NULL;
+
 static const char *current_function_return_type = NULL;
 static int current_function_has_return = 0;
 
@@ -655,6 +657,13 @@ arg_list:
 
 return_statement:
       RETURN expr {
+        if (current_function_return_type == NULL) {
+          char _msg[128];
+          snprintf(_msg, sizeof(_msg), "[SEMANTIC ERROR -> L%d:C%d] comando 'return' fora de função.\n", yyline, yycolumn);
+          yyerror(_msg);
+          YYABORT;
+        }
+
         if (current_function_return_type && $2 && strlen($2->dataType) > 0 && strcmp(current_function_return_type, $2->dataType) != 0) {
           char _msg[160];
           snprintf(_msg, sizeof(_msg), "[SEMANTIC WARNING -> L%d:C%d] tipo de retorno incompatível, esperado %s.\n", yyline, yycolumn, current_function_return_type);
@@ -663,12 +672,19 @@ return_statement:
         current_function_has_return = 1;
         $$ = createNodeReturn($2);
       }
-    | RETURN {
+    |
+      RETURN {
+        if (current_function_return_type == NULL) {
+          char _msg[128];
+          snprintf(_msg, sizeof(_msg), "[SEMANTIC ERROR -> L%d:C%d] comando 'return' fora de função.\n", yyline, yycolumn);
+          yyerror(_msg);
+          YYABORT;
+        }
+
         current_function_has_return = 1;
         $$ = createNodeReturn(NULL);
       }
     ;
-
 %%
 
 int main(int argc, char **argv) {
