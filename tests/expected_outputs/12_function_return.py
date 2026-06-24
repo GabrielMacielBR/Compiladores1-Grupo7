@@ -1,5 +1,5 @@
 def soma(a, b):
-    return (a + b)
+    return a + b
 
 def main():
     resultado = soma(3, 4)

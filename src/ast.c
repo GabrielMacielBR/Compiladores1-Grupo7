@@ -1324,6 +1324,11 @@ TAC *optimizeTAC(TAC *list)
     return newList;
 }
 
+static int isAtom(NodeAST *node) {
+    if (!node) return 1;
+    return (node->type == AST_NUM || node->type == AST_FLOAT || node->type == AST_ID);
+}
+
 char *genExprPython(NodeAST *expr)
 {
     if (!expr)
@@ -1363,12 +1368,17 @@ char *genExprPython(NodeAST *expr)
             pyOp = "or";
         }
 
-        size_t size = strlen(left) + strlen(pyOp) + strlen(right) + 6;
+        size_t size = strlen(left) + strlen(pyOp) + strlen(right) + 8;
         char *result = malloc(size);
 
         if (result)
         {
-            snprintf(result, size, "(%s %s %s)", left, pyOp, right);
+            // Aplica a regra do átomo para evitar parênteses duplicados
+            if (isAtom(expr->children[0]) && isAtom(expr->children[1])) {
+                snprintf(result, size, "%s %s %s", left, pyOp, right);
+            } else {
+                snprintf(result, size, "(%s %s %s)", left, pyOp, right);
+            }
         }
 
         free(left);
@@ -1392,7 +1402,12 @@ char *genExprPython(NodeAST *expr)
 
         if (result)
         {
-            snprintf(result, size, "(%s%s)", pyOp, child);
+            // Aplica a regra do átomo para o operador unário
+            if (isAtom(expr->children[0])) {
+                snprintf(result, size, "%s%s", pyOp, child);
+            } else {
+                snprintf(result, size, "(%s%s)", pyOp, child);
+            }
         }
 
         free(child);
@@ -1612,7 +1627,8 @@ void genNodePython(NodeAST *node, FILE *out, int indent)
             indent + 1);
 
         printIndent(out, indent + 1);
-        fprintf(out, "if not (%s):\n", cond);
+        // REMOVIDO os parênteses redundantes do formato!
+        fprintf(out, "if not %s:\n", cond);
 
         printIndent(out, indent + 2);
         fprintf(out, "break\n");
