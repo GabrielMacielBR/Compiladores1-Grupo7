@@ -1535,17 +1535,29 @@ void genNodePython(NodeAST *node, FILE *out, int indent)
         break;
     }
 
-    case AST_ASSIGN:
+case AST_ASSIGN:
     {
-        char *value =
-            genExprPython(node->children[1]);
-        printIndent(out, indent);
-        fprintf(out,
-                "%s = %s\n",
-                node->children[0]->name,
-                value);
+        NodeAST *lhs = node->children[0];
+        NodeAST *rhs = node->children[1];
 
-        free(value);
+        if (rhs && rhs->type == AST_BINOP &&
+            (strcmp(rhs->op, "+") == 0 || strcmp(rhs->op, "-") == 0) &&
+            rhs->children[0] && rhs->children[0]->type == AST_ID &&
+            strcmp(rhs->children[0]->name, lhs->name) == 0 &&
+            rhs->children[1] && rhs->children[1]->type == AST_NUM &&
+            rhs->children[1]->value == 1)
+        {
+            printIndent(out, indent);
+            fprintf(out, "%s %s= 1\n", lhs->name, rhs->op);
+        }
+        else
+        {
+            // Atribuição padrão (ex: x = 5 ou a = x)
+            char *value = genExprPython(rhs);
+            printIndent(out, indent);
+            fprintf(out, "%s = %s\n", lhs->name, value);
+            free(value);
+        }
         break;
     }
 

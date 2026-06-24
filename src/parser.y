@@ -278,7 +278,6 @@ assignment:
         yyerror(_msg);
         YYABORT;
       } else {
-        /* checar compatibilidade de tipos entre LHS e RHS (Bottom-up AST) */
         {
           const char *lhsType = getSymbolType($1);
           const char *rhsType = $3->dataType;
@@ -289,10 +288,7 @@ assignment:
             YYABORT;
           }
         }
-        $$ = createNodeAssign(
-          createNodeId($1),
-          $3
-        );
+        $$ = createNodeAssign(createNodeId($1), $3);
       }
     }
   | IDENT INCREMENT
@@ -310,14 +306,7 @@ assignment:
           yyerror(_msg);
           YYABORT;
         }
-        $$ = createNodeAssign(
-          createNodeId($1),
-          createNodeBinOp(
-            "+",
-            createNodeId($1),
-            createNodeNum(1)
-          )
-        );
+        $$ = createNodeAssign(createNodeId($1), createNodeBinOp("+", createNodeId($1), createNodeNum(1)));
       }
     }
   | IDENT DECREMENT
@@ -335,14 +324,44 @@ assignment:
           yyerror(_msg);
           YYABORT;
         }
-        $$ = createNodeAssign(
-          createNodeId($1),
-          createNodeBinOp(
-            "-",
-            createNodeId($1),
-            createNodeNum(1)
-          )
-        );
+        $$ = createNodeAssign(createNodeId($1), createNodeBinOp("-", createNodeId($1), createNodeNum(1)));
+      }
+    }
+  /* ---- ADICIONE AS DUAS REGRAS ABAIXO PARA SUPORTAR PRÉ-INCREMENTO E PRÉ-DECREMENTO ---- */
+  | INCREMENT IDENT
+    {
+      if (!searchSymbol($2)) {
+        char _msg[128];
+        snprintf(_msg, sizeof(_msg), "[SEMANTIC ERROR -> L%d:C%d] incremento em símbolo não declarado: %s.\n", yyline, yycolumn - (int)strlen($2), $2);
+        yyerror(_msg);
+        YYABORT;
+      } else {
+        const char *t = getSymbolType($2);
+        if (!t || strcmp(t, "int") != 0) {
+          char _msg[128];
+          snprintf(_msg, sizeof(_msg), "[SEMANTIC ERRO -> L%d:C%d] incremento apenas permitido para int: %s.\n", yyline, yycolumn - (int)strlen($2), $2);
+          yyerror(_msg);
+          YYABORT;
+        }
+        $$ = createNodeAssign(createNodeId($2), createNodeBinOp("+", createNodeId($2), createNodeNum(1)));
+      }
+    }
+  | DECREMENT IDENT
+    {
+      if (!searchSymbol($2)) {
+        char _msg[128];
+        snprintf(_msg, sizeof(_msg), "[SEMANTIC ERROR -> L%d:C%d] decremento em símbolo não declarado: %s.\n", yyline, yycolumn - (int)strlen($2), $2);
+        yyerror(_msg);
+        YYABORT;
+      } else {
+        const char *t = getSymbolType($2);
+        if (!t || strcmp(t, "int") != 0) {
+          char _msg[128];
+          snprintf(_msg, sizeof(_msg), "[SEMANTIC ERROR -> L%d:C%d] decremento apenas permitido para int: %s.\n", yyline, yycolumn - (int)strlen($2), $2);
+          yyerror(_msg);
+          YYABORT;
+        }
+        $$ = createNodeAssign(createNodeId($2), createNodeBinOp("-", createNodeId($2), createNodeNum(1)));
       }
     }
 ;
