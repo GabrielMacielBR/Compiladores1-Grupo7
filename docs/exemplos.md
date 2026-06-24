@@ -58,3 +58,43 @@ def main():
 
 main()
 ```
+## Exemplo 3: Operações aritméticas, condicional e laço
+
+### Código de entrada (C)
+
+```c
+int main() {
+    int soma = 0;
+    int i = 1;
+
+    while (i <= 5) {
+        soma = soma + i;
+        i++;
+    }
+
+    if (soma > 10) {
+        soma = soma * 2;
+    }
+
+    return soma;
+}
+```
+
+### Código gerado (Python)
+
+```python
+def main():
+    soma = 0
+    i = 1
+
+    while i <= 5:
+        soma = soma + i
+        i += 1
+
+    if soma > 10:
+        soma = soma * 2
+
+    return soma
+
+main()
+```

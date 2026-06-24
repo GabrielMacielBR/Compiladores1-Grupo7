@@ -114,6 +114,89 @@ Esse comando percorre todos os arquivos .c da pasta tests, executa o compilador 
 
 ## Exemplos de uso
 
+Os tópicos abaixo apresentam alguns exemplos escritos em C e o código Python gerado pelo compilador.
+
+<details>
+<summary><strong>Exemplo 1: Operações aritméticas, condicional e laço</strong></summary>
+
+### Código de entrada (C)
+
+```c
+int main() {
+    int soma = 0;
+    int i = 1;
+
+    while (i <= 5) {
+        soma = soma + i;
+        i++;
+    }
+
+    if (soma > 10) {
+        soma = soma * 2;
+    }
+
+    return soma;
+}
+```
+
+### Código gerado (Python)
+
+```python
+def main():
+    soma = 0
+    i = 1
+
+    while i <= 5:
+        soma = soma + i
+        i += 1
+
+    if soma > 10:
+        soma = soma * 2
+
+    return soma
+
+main()
+```
+
+</details>
+
+<details>
+<summary><strong>Exemplo 2: Estrutura condicional</strong></summary>
+
+### Código de entrada (C)
+
+```c
+int main() {
+    int x = 5;
+
+    if (x > 0) {
+        x = x + 1;
+    } else {
+        x = x - 1;
+    }
+
+    return x;
+}
+```
+
+### Código gerado (Python)
+
+```python
+def main():
+    x = 5
+
+    if x > 0:
+        x = x + 1
+    else:
+        x = x - 1
+
+    return x
+
+main()
+```
+
+</details>
+
 # Equipe
 
 Conheça a equipe de desenvolvimento deste projeto:
