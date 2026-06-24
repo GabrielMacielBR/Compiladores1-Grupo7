@@ -97,9 +97,8 @@ input:
           root = $$;
 
           if ($2) {
-              printf("\nAST:\n");
+              printf("\n=== AST ===\n");
               printAST($2, 0);
-              printf("\n");
               printTable();
           }
       }
@@ -113,16 +112,15 @@ input:
           root = $$;
 
           if ($2) {
-              printf("\nAST:\n");
+              printf("\n=== AST ===\n");
               printAST($2, 0);
-              printf("\n");
               printTable();
           }
       }
     | input error SEMICOLON
       {
           fprintf(stderr,
-                  "[ERRO SINTATICO] Erro recuperado ate ';'\n");
+                  "[SINTATIC ERROR] erro recuperado ate ';'.\n");
           yyerrok;
           yyclearin;
           $$ = $1;
@@ -139,7 +137,7 @@ statement:
   | BREAK SEMICOLON
       {
         if (loopCounter <= 0) {
-          yyerror("Erro semântico [L%d:C%d]: break fora de laço");
+          yyerror("[SEMANTIC ERROR -> L%d:C%d] comando 'break' fora de laço.\n");
           YYABORT;
         }
         $$ = createNode(AST_BREAK);
@@ -147,7 +145,7 @@ statement:
   | CONTINUE SEMICOLON
       {
         if (loopCounter <= 0) {
-          yyerror("Erro semântico [L%d:C%d]: continue fora de laço");
+          yyerror("[SEMANTIC ERROR -> L%d:C%d] comando 'continue' fora de laço.\n");
           YYABORT;
         }
         $$ = createNode(AST_CONTINUE);
@@ -166,11 +164,14 @@ declaration:
       if (searchSymbolInCurrentScope($2)) {
         if (checkTypeConflict($2, "int")) {
           char _msg[128];
-          snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: redeclaração com tipo diferente: %s", yyline, yycolumn - (int)strlen($2), $2);
+          snprintf(_msg, sizeof(_msg), "[SEMANTIC ERROR -> L%d:C%d] redeclaração com tipo diferente: %s.\n", yyline, yycolumn - (int)strlen($2), $2);
           yyerror(_msg);
           YYABORT;
         } else {
-          fprintf(stderr, "Aviso semântico [L%d:C%d]: símbolo já declarado: %s\n", yyline, yycolumn - (int)strlen($2), $2);
+          char _msg[128];
+          snprintf(_msg, sizeof(_msg), "[SEMANTIC ERROR -> L%d:C%d] símbolo já declarado: %s.\n", yyline, yycolumn - (int)strlen($2), $2);
+          yyerror(_msg);
+          YYABORT;
         }
       } else {
         insertSymbol($2, "int", yyline, yycolumn - (int)strlen($2));
@@ -187,11 +188,11 @@ declaration:
       if (searchSymbolInCurrentScope($2)) {
         if (checkTypeConflict($2, "float")) {
           char _msg[128];
-          snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: redeclaração com tipo diferente: %s", yyline, yycolumn - (int)strlen($2), $2);
+          snprintf(_msg, sizeof(_msg), "[SEMANTIC ERROR -> L%d:C%d] redeclaração com tipo diferente: %s.\n", yyline, yycolumn - (int)strlen($2), $2);
           yyerror(_msg);
           YYABORT;
         } else {
-          fprintf(stderr, "Aviso semântico [L%d:C%d]: símbolo já declarado: %s\n", yyline, yycolumn - (int)strlen($2), $2);
+          fprintf(stderr, "[SEMANTIC WARNING -> L%d:C%d] símbolo já declarado: %s.\n", yyline, yycolumn - (int)strlen($2), $2);
         }
       } else {
         insertSymbol($2, "float", yyline, yycolumn - (int)strlen($2));
@@ -208,11 +209,11 @@ declaration:
       if (searchSymbolInCurrentScope($2)) {
         if (checkTypeConflict($2, "int")) {
           char _msg[128];
-          snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: redeclaração com tipo diferente: %s", yyline, yycolumn - (int)strlen($2), $2);
+          snprintf(_msg, sizeof(_msg), "[SEMANTIC ERROR -> L%d:C%d] redeclaração com tipo diferente: %s.\n", yyline, yycolumn - (int)strlen($2), $2);
           yyerror(_msg);
           YYABORT;
         } else {
-          fprintf(stderr, "Aviso semântico [L%d:C%d]: símbolo já declarado: %s\n", yyline, yycolumn - (int)strlen($2), $2);
+          fprintf(stderr, "[SEMANTIC WARNING -> L%d:C%d] símbolo já declarado: %s.\n", yyline, yycolumn - (int)strlen($2), $2);
         }
       } else {
         insertSymbol($2, "int", yyline, yycolumn - (int)strlen($2));
@@ -222,7 +223,7 @@ declaration:
         const char *rhsType = $4->dataType;
         if (rhsType && strlen(rhsType) > 0 && strcmp(rhsType, "int") != 0) {
           char _msg[128];
-          snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: atribuição com tipo incompatível na declaração: %s", yyline, yycolumn - (int)strlen($2), $2);
+          snprintf(_msg, sizeof(_msg), "[SEMANTIC ERROR -> L%d:C%d] atribuição com tipo incompatível na declaração: %s.\n", yyline, yycolumn - (int)strlen($2), $2);
           yyerror(_msg);
           YYABORT;
         }
@@ -238,11 +239,11 @@ declaration:
       if (searchSymbolInCurrentScope($2)) {
         if (checkTypeConflict($2, "float")) {
           char _msg[128];
-          snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: redeclaração com tipo diferente: %s", yyline, yycolumn - (int)strlen($2), $2);
+          snprintf(_msg, sizeof(_msg), "[SEMANTIC ERROR ->L%d:C%d] redeclaração com tipo diferente: %s.\n", yyline, yycolumn - (int)strlen($2), $2);
           yyerror(_msg);
           YYABORT;
         } else {
-          fprintf(stderr, "Aviso semântico [L%d:C%d]: símbolo já declarado: %s\n", yyline, yycolumn - (int)strlen($2), $2);
+          fprintf(stderr, "[SEMANTIC WARNING -> L%d:C%d] símbolo já declarado: %s.\n", yyline, yycolumn - (int)strlen($2), $2);
         }
       } else {
         insertSymbol($2, "float", yyline, yycolumn - (int)strlen($2));
@@ -252,7 +253,7 @@ declaration:
         const char *rhsType = $4->dataType;
         if (rhsType && strlen(rhsType) > 0 && strcmp(rhsType, "float") != 0) {
           char _msg[128];
-          snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: atribuição com tipo incompatível na declaração: %s", yyline, yycolumn - (int)strlen($2), $2);
+          snprintf(_msg, sizeof(_msg), "[SEMANTIC ERROR -> L%d:C%d] atribuição com tipo incompatível na declaração: %s.\n", yyline, yycolumn - (int)strlen($2), $2);
           yyerror(_msg);
           YYABORT;
         }
@@ -271,7 +272,7 @@ assignment:
     {
       if (!searchSymbol($1)) {
         char _msg[128];
-        snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: atribuição a símbolo não declarado: %s", yyline, yycolumn - (int)strlen($1), $1);
+        snprintf(_msg, sizeof(_msg), "[SEMANTIC ERROR -> L%d:C%d] atribuição a símbolo não declarado: %s.\n", yyline, yycolumn - (int)strlen($1), $1);
         yyerror(_msg);
         YYABORT;
       } else {
@@ -281,7 +282,7 @@ assignment:
           const char *rhsType = $3->dataType;
           if (rhsType && strlen(rhsType) > 0 && lhsType && !isAssignable(lhsType, rhsType)) {
             char _msg[128];
-            snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: incompatibilidade de tipos na atribuição: %s", yyline, yycolumn - (int)strlen($1), $1);
+            snprintf(_msg, sizeof(_msg), "[SEMANTIC ERROR -> L%d:C%d] incompatibilidade de tipos na atribuição: %s.\n", yyline, yycolumn - (int)strlen($1), $1);
             yyerror(_msg);
             YYABORT;
           }
@@ -296,14 +297,14 @@ assignment:
     {
       if (!searchSymbol($1)) {
         char _msg[128];
-        snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: incremento em símbolo não declarado: %s", yyline, yycolumn - (int)strlen($1) - 2, $1);
+        snprintf(_msg, sizeof(_msg), "[SEMANTIC ERROR -> L%d:C%d] incremento em símbolo não declarado: %s.\n", yyline, yycolumn - (int)strlen($1) - 2, $1);
         yyerror(_msg);
         YYABORT;
       } else {
         const char *t = getSymbolType($1);
         if (!t || strcmp(t, "int") != 0) {
           char _msg[128];
-          snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: incremento apenas permitido para int: %s", yyline, yycolumn - (int)strlen($1) - 2, $1);
+          snprintf(_msg, sizeof(_msg), "[SEMANTIC ERRO -> L%d:C%d] incremento apenas permitido para int: %s.\n", yyline, yycolumn - (int)strlen($1) - 2, $1);
           yyerror(_msg);
           YYABORT;
         }
@@ -321,14 +322,14 @@ assignment:
     {
       if (!searchSymbol($1)) {
         char _msg[128];
-        snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: decremento em símbolo não declarado: %s", yyline, yycolumn - (int)strlen($1) - 2, $1);
+        snprintf(_msg, sizeof(_msg), "[SEMANTIC ERROR -> L%d:C%d] decremento em símbolo não declarado: %s.\n", yyline, yycolumn - (int)strlen($1) - 2, $1);
         yyerror(_msg);
         YYABORT;
       } else {
         const char *t = getSymbolType($1);
         if (!t || strcmp(t, "int") != 0) {
           char _msg[128];
-          snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: decremento apenas permitido para int: %s", yyline, yycolumn - (int)strlen($1) - 2, $1);
+          snprintf(_msg, sizeof(_msg), "[SEMANTIC ERROR -> L%d:C%d] decremento apenas permitido para int: %s.\n", yyline, yycolumn - (int)strlen($1) - 2, $1);
           yyerror(_msg);
           YYABORT;
         }
@@ -403,7 +404,7 @@ expr:
     }
   | IDENT { 
         if (!searchSymbol($1))
-            fprintf(stderr, "Aviso semântico [L%d:C%d]: símbolo não declarado: %s\n", yyline, yycolumn - (int)strlen($1), $1);
+            fprintf(stderr, "[SEMANTIC WARNING -> L%d:C%d] símbolo não declarado: %s.\n", yyline, yycolumn - (int)strlen($1), $1);
         $$ = createNodeId($1);
     }
 
@@ -414,7 +415,7 @@ block:
     LBRACE { pushScope(); } statements RBRACE {
         $$ = $3;
         popScope();
-        printf("INFO: Bloco de codigo detectado\n");
+        printf("[INFO] bloco de codigo detectado.\n");
     }
     ;
 
@@ -450,14 +451,14 @@ loop:
         {
           if (!isConditionValid($4)) {
             char _msg[128];
-           snprintf(_msg, sizeof(_msg),"Erro semântico [L%d:C%d]: condição inválida no while", yyline, yycolumn);
+           snprintf(_msg, sizeof(_msg),"[SEMANTIC ERROR ->L%d:C%d]: condição inválida no WHILE.\n", yyline, yycolumn);
             yyerror(_msg);
             YYABORT;
           }
 
           loopCounter--;
           $$ = createNodeWhile($4, $6);
-          printf("INFO: Laço WHILE detectado\n");
+          printf("[INFO] laço WHILE detectado.\n");
         }
   | FOR LPAREN
       {
@@ -468,7 +469,7 @@ loop:
         {
           if ($6 && !isConditionValid($6)) {
             char _msg[128];
-           snprintf(_msg, sizeof(_msg),"Erro semântico [L%d:C%d]: condição inválida no for", yyline, yycolumn);
+           snprintf(_msg, sizeof(_msg), "[SEMANTIC ERROR -> L%d:C%d] condição inválida no FOR.\n", yyline, yycolumn);
             yyerror(_msg);
             YYABORT;
           }
@@ -476,7 +477,7 @@ loop:
           loopCounter--;
           $$ = createNodeFor($4, $6, $8, $10);
           popScope();
-          printf("INFO: Laço FOR detectado\n");
+          printf("[INFO] Laço FOR detectado.\n");
         }
   | DO
       {
@@ -486,14 +487,14 @@ loop:
         {
           if (!isConditionValid($6)) {
             char _msg[128];
-            snprintf(_msg, sizeof(_msg),"Erro semântico [L%d:C%d]: condição inválida no do-while",yyline, yycolumn);
+            snprintf(_msg, sizeof(_msg),"[SEMANTIC ERROR -> L%d:C%d] condição inválida no DO-WHILE.\n",yyline, yycolumn);
             yyerror(_msg);
             YYABORT;
           }
 
           loopCounter--;
           $$ = createNodeDoWhile($3, $6);
-          printf("INFO: Laço DO...WHILE detectado\n");
+          printf("[INFO] laço DO-WHILE detectado.\n");
         }
   ;
 
@@ -503,29 +504,29 @@ conditional:
       {
         if (!isConditionValid($3)) {
           char _msg[128];
-          snprintf(_msg, sizeof(_msg),"Erro semântico [L%d:C%d]: condição inválida no if",yyline, yycolumn);
+          snprintf(_msg, sizeof(_msg),"[SEMANTIC ERROR -> L%d:C%d] condição inválida no IF.\n",yyline, yycolumn);
           yyerror(_msg);
           YYABORT;
         }
         
         $$ = createNodeIf($3, $5, NULL);
-        printf("SUCESSO: Declaração if realizada.\n");
+        printf("[INFO] declaração IF detectada.\n");
       }
   | IF LPAREN expr RPAREN body ELSE body
       {
         if (!isConditionValid($3)) {
           char _msg[128];
-          snprintf(_msg, sizeof(_msg),"Erro semântico [L%d:C%d]: condição inválida no if", yyline, yycolumn);
+          snprintf(_msg, sizeof(_msg),"[SEMANTIC ERROR -> L%d:C%d] condição inválida no IF.\n", yyline, yycolumn);
           yyerror(_msg);
           YYABORT;
         }
 
         $$ = createNodeIf($3, $5, $7);
-        printf("SUCESSO: Declaração if-else realizada.\n");
+        printf("[INFO] declaração IF-ELSE detectada.\n");
       }
     | expr QUESTION body COLON body {
           $$ = createNodeIf($1, $3, $5);
-          printf("SUCESSO: Declaração condicional com operador ternário realizada.\n");
+          printf("[INFO] declaração condicional com operador ternário detectada.\n");
       }
     ;
 
@@ -540,7 +541,7 @@ function_definition:
     {
       if (searchFunction($2)) {
         char _msg[128];
-        snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: função já declarada: %s", yyline, yycolumn - (int)strlen($2) - 1, $2);
+        snprintf(_msg, sizeof(_msg), "[SEMANTIC ERROR -> L%d:C%d] função já declarada: %s.\n", yyline, yycolumn - (int)strlen($2) - 1, $2);
         yyerror(_msg);
         YYABORT;
       }
@@ -556,7 +557,7 @@ function_definition:
       setFunctionAst($2, $$);
       popScope();
       if (!current_function_has_return) {
-        fprintf(stderr, "Aviso semântico [L%d:C%d]: função '%s' não possui return\n", yyline, yycolumn, $2);
+        fprintf(stderr, "[SEMANTIC WARNING -> L%d:C%d] função '%s' não possui retorno.\n", yyline, yycolumn, $2);
       }
       current_function_return_type = NULL;
       printf("INFO: Função definida: %s\n", $2);
@@ -565,7 +566,7 @@ function_definition:
     {
       if (searchFunction($2)) {
         char _msg[128];
-        snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: função já declarada: %s", yyline, yycolumn - (int)strlen($2) - 1, $2);
+        snprintf(_msg, sizeof(_msg), "[SEMANTIC ERROR -> L%d:C%d] função já declarada: %s.\n", yyline, yycolumn - (int)strlen($2) - 1, $2);
         yyerror(_msg);
         YYABORT;
       }
@@ -581,10 +582,10 @@ function_definition:
       setFunctionAst($2, $$);
       popScope();
       if (!current_function_has_return) {
-        fprintf(stderr, "Aviso semântico [L%d:C%d]: função '%s' não possui return\n", yyline, yycolumn, $2);
+        fprintf(stderr, "[SEMANTIC WARNING -> L%d:C%d] função '%s' não possui retorno.\n", yyline, yycolumn, $2);
       }
       current_function_return_type = NULL;
-      printf("INFO: Função definida: %s\n", $2);
+      printf("[INFO] função definida: %s,\n", $2);
     }
     ;
 
@@ -592,7 +593,7 @@ function_block:
     LBRACE statements RBRACE
     {
       $$ = $2;
-      printf("INFO: Bloco de codigo detectado\n");
+      printf("[INFO] bloco de codigo detectado.\n");
     }
     ;
 
@@ -611,13 +612,13 @@ parameter:
       type_specifier IDENT
       {
         if (searchSymbolInCurrentScope($2)) {
-          fprintf(stderr, "Aviso semântico [L%d:C%d]: parâmetro já declarado: %s\n", yyline, yycolumn - (int)strlen($2), $2);
+          fprintf(stderr, "[SEMANTIC WARNING -> L%d:C%d] parâmetro já declarado: %s.\n", yyline, yycolumn - (int)strlen($2), $2);
         } else {
           insertSymbol($2, $1, yyline, yycolumn - (int)strlen($2));
         }
 
         $$ = createNodeDecl($1, createNodeId($2), NULL);
-        printf("INFO: Parametro: %s\n", $2);
+        printf("[INFO] Parametro: %s\n", $2);
       }
     ;
 
@@ -626,7 +627,7 @@ function_call:
     {
       if (!searchFunction($1)) {
         char _msg[128];
-        snprintf(_msg, sizeof(_msg), "Erro semântico [L%d:C%d]: função não declarada: %s", yyline, yycolumn - (int)strlen($1), $1);
+        snprintf(_msg, sizeof(_msg), "[SEMANTIC ERROR -> L%d:C%d] função '%s' não declarada.\n", yyline, yycolumn - (int)strlen($1), $1);
         yyerror(_msg);
         YYABORT;
       }
@@ -656,7 +657,7 @@ return_statement:
       RETURN expr {
         if (current_function_return_type && $2 && strlen($2->dataType) > 0 && strcmp(current_function_return_type, $2->dataType) != 0) {
           char _msg[160];
-          snprintf(_msg, sizeof(_msg), "Aviso semântico [L%d:C%d]: tipo de retorno incompatível, esperado %s", yyline, yycolumn, current_function_return_type);
+          snprintf(_msg, sizeof(_msg), "[SEMANTIC WARNING -> L%d:C%d] tipo de retorno incompatível, esperado %s.\n", yyline, yycolumn, current_function_return_type);
           fprintf(stderr, "%s\n", _msg);
         }
         current_function_has_return = 1;
@@ -678,7 +679,7 @@ int main(int argc, char **argv) {
 
   FILE *input = fopen(argv[1], "r");
   if (!input) {
-    fprintf(stderr, "Erro: nao foi possivel abrir o arquivo '%s'.\n", argv[1]);
+    fprintf(stderr, "[ERROR] não foi possivel abrir o arquivo '%s'.\n", argv[1]);
     return 1;
   }
 
@@ -689,10 +690,9 @@ int main(int argc, char **argv) {
   fclose(input);
 
   if (root) {
-    printf("INFO: Gerando TAC a partir da AST...\n");
-    printf("\n===== AST FINAL =====\n");
+    printf("[TAC] gerando TAC a partir da AST...\n");
+    printf("\n=== AST FINAL ===\n");
     printAST(root, 0);
-    printf("\n=====================\n");
     generateTAC(root);
     generatePythonFile(root, "result.py");
   }
@@ -702,9 +702,9 @@ int main(int argc, char **argv) {
 }
 
 void yyerror(const char *s) {
-  if (strncmp(s, "Erro semântico", 14) == 0) {
+  if (strncmp(s, "[SEMANTIC ERROR]", 14) == 0) {
     fprintf(stderr, "%s\n", s);
   } else {
-    fprintf(stderr, "Erro sintático [L%d:C%d]: %s\n", yyline, yycolumn, s);
+    fprintf(stderr, "[SINTAX ERROR -> L%d:C%d] %s.\n", yyline, yycolumn, s);
   }
 }

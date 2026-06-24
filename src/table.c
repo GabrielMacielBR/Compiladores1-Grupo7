@@ -173,7 +173,7 @@ const char *getSymbolType(char *name) {
 }
 
 void printTable() {
-    printf("\nTabela de Símbolos (hash):\n");
+    printf("\n=== Tabela de Símbolos ===\n");
     for (int i = 0; i < TABLE_SIZE; ++i) {
         for (Symbol *s = table[i]; s; s = s->next)
             printf("Nome: %s, Tipo: %s, Kind: %s, Scope: %d, Decl: L%d:C%d\n", s->name, s->type, s->kind, s->scope, s->line, s->column);
